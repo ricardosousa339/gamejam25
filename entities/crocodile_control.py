@@ -118,6 +118,10 @@ class CrocodileControl:
             self.vel_y = random.uniform(-1.5, 1.5)
 
             print(f"[CROC] Repositioned to ({crocodile.rect.x}, {crocodile.rect.y}), direction: {crocodile.swim_direction}")
+
+            # Add splash at the NEW position where crocodile is emerging
+            self._add_splash('emerge')
+
             self.should_reposition = False
 
         # Capture animation - emerge and wobble
@@ -279,11 +283,10 @@ class CrocodileControl:
             # When emerging from fully submerged (state 4) to state 3, randomize position and direction
             if old_state == self.FULLY_SUBMERGED and self.current_state == self.HEAD_ONLY:
                 print("[CROC] Emerging from fully submerged - randomizing position and direction")
-                # Will be applied in update_movement via a flag
-                self.should_reposition = True
 
-                # Create splash when emerging
-                self._add_splash('emerge')
+                # Will be applied in update_movement via a flag
+                # Splash will be created AFTER repositioning in update_movement
+                self.should_reposition = True
 
             print(f"[CROC] Surfacing: {old_state} -> {self.current_state} (target: {self.target_state})")
 

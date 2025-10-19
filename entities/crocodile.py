@@ -3,6 +3,7 @@ Crocodile entity that swims in the river with animated sprites
 """
 import pygame
 import random
+import config
 from utils import resource_path
 from spritesheet import spritesheet
 from entities.crocodile_control import CrocodileControl
@@ -70,6 +71,9 @@ class Crocodile(pygame.sprite.Sprite):
 
         # Splash events queue - list of (event_type, x, y) tuples
         self.pending_splashes = []
+
+        # Sound reference for crocodile attack sound
+        self.attack_sound = None
 
         # Control system ==> alway last init action (control needs crocodile fully started)
         self.control = control(self) if control is not None else CrocodileControl(self)
@@ -193,6 +197,9 @@ class Crocodile(pygame.sprite.Sprite):
         self.control.start_carrying(self)
         print(f"[CROC] Started carrying pegador at ({self.rect.x}, {self.rect.y})")
 
+        # Play crocodile attack sound
+        self.play_attack_sound()
+
     def release_pegador(self):
         """Release the carried pegador and return to normal behavior"""
         if self.carried_pegador:
@@ -201,6 +208,10 @@ class Crocodile(pygame.sprite.Sprite):
             self.carried_pegador = None
             self.is_carrying_pegador = False
             self.control.stop_carrying()
+
+            # Stop crocodile attack sound
+            self.stop_attack_sound()
+
             return released_pegador
         return None
 
@@ -255,3 +266,25 @@ class Crocodile(pygame.sprite.Sprite):
         overlap = self.mask.overlap(other_sprite.mask, (offset_x, offset_y))
 
         return overlap is not None
+
+    def play_attack_sound(self):
+        """Play crocodile attack sound"""
+        if config.SOUND_ENABLED and pygame.mixer.get_init():
+            try:
+                # Stop previous sound if playing
+                self.stop_attack_sound()
+
+                # Load and play new sound
+                self.attack_sound = pygame.mixer.Sound(resource_path('assets/sons/crocodilo_agua.ogg'))
+                self.attack_sound.set_volume(config.CROCODILE_SOUND_VOLUME)
+                self.attack_sound.play()
+                print("[CROC] Playing attack sound")
+            except (pygame.error, FileNotFoundError) as e:
+                print(f"[CROC] Warning: Could not play crocodile sound: {e}")
+
+    def stop_attack_sound(self):
+        """Stop crocodile attack sound"""
+        if self.attack_sound:
+            self.attack_sound.stop()
+            self.attack_sound = None
+            print("[CROC] Stopped attack sound")
