@@ -22,13 +22,19 @@ class FloatingObject(pygame.sprite.Sprite):
         super().__init__()
         
         self.object_type = object_type
+        self.object = OBJECT_TYPES.get(object_type)
         
         # Create a simple rectangle sprite (replace with images later)
         self.width = self.WIDTH
         self.height = self.HEIGHT
-        self.image = pygame.Surface((self.width, self.height))
-        self.color = OBJECT_TYPES.get(object_type, WHITE)
-        self.image.fill(self.color)
+        self.image = pygame.image.load(self.object.image)
+        # self.color = OBJECT_TYPES.get(object_type, WHITE)
+        # self.image.fill(self.color)
+        self.rotation = random.randint(0, 359)
+        self.image = pygame.transform.rotate(self.image, self.rotation)
+        image_width = self.image.get_width() * self.object.scale
+        image_height = self.image.get_height() * self.object.scale
+        self.image = pygame.transform.smoothscale(self.image, (image_width, image_height))
         
         self.rect = self.image.get_rect()
         self.rect.x = x

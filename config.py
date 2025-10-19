@@ -29,10 +29,22 @@ OBJECT_SPAWN_RATE = 2000  # milliseconds
 RIVER_IMAGE_BAND_TOP = 100
 RIVER_IMAGE_BAND_BOTTOM = 225
 
-# Object types and colors
+class ObjectType():
+    def __init__(self, type, image, scale):
+        self.type = type
+        self.image = image
+        self.scale = scale
+
 OBJECT_TYPES = {
-    "plastic": RED,
-    "metal": (128, 128, 128),  # Gray
-    "organic": GREEN,
-    "paper": (210, 180, 140)   # Tan
+    "cardboard": ObjectType("paper", "./assets/lixo/caixa.png", 1.2),
+    "bag": ObjectType("mixed", "./assets/lixo/garbage-bag.png", 1.2),
+    "big-bottle": ObjectType("plastic", "./assets/lixo/garrafa-grande.png", 1),
+    "big-bottle-2": ObjectType("plastic", "./assets/lixo/garrafa-grande2.png", 1),
+    "bottle": ObjectType("plastic", "./assets/lixo/garrafa.png", 1),
+    "can": ObjectType("metal", "./assets/lixo/lata.png", 0.9),
+    "small-can": ObjectType("metal", "./assets/lixo/latinha.png", 1),
+    "spray-can": ObjectType("metal", "./assets/lixo/spray.png", 1),
+    "big-glass-bottle": ObjectType("glass", "./assets/lixo/vidro-grande.png", 1),
+    "glass-bottle": ObjectType("glass", "./assets/lixo/vidro.png", 1),
+    "glass-bottle2": ObjectType("glass", "./assets/lixo/vidro2.png", 1),
 }
