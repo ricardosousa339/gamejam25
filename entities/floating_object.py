@@ -45,17 +45,22 @@ class FloatingObject(pygame.sprite.Sprite):
         self.vel_y = random.uniform(-0.5, 0.5)  # Slight vertical wobble
         self.min_y = min_y
         self.max_y = max_y
+        
+        # Capture state
+        self.is_captured = False
     
     def update(self):
         """Update the floating object position"""
-        # Float with the river - stay in sync with the water texture
-        self.rect.x -= RIVER_FLOW_SPEED
-        self.rect.y += self.vel_y
-        
-        # Keep within vertical bounds with bounce
-        if self.rect.top < self.min_y:
-            self.rect.top = self.min_y
-            self.vel_y *= -1
-        elif self.rect.bottom > self.max_y:
-            self.rect.bottom = self.max_y
-            self.vel_y *= -1
+        # Only move if not captured
+        if not self.is_captured:
+            # Float with the river - stay in sync with the water texture
+            self.rect.x -= RIVER_FLOW_SPEED
+            self.rect.y += self.vel_y
+            
+            # Keep within vertical bounds with bounce
+            if self.rect.top < self.min_y:
+                self.rect.top = self.min_y
+                self.vel_y *= -1
+            elif self.rect.bottom > self.max_y:
+                self.rect.bottom = self.max_y
+                self.vel_y *= -1

@@ -9,11 +9,22 @@ gamejam25/
 ├── main.py              # Ponto de entrada do jogo
 ├── game.py              # Loop principal e lógica do jogo
 ├── config.py            # Configurações e constantes
+├── utils.py             # Utilidades (resource_path para PyInstaller)
 ├── entities/            # Entidades do jogo
 │   ├── __init__.py
 │   ├── floating_object.py  # Objetos flutuando no rio
+│   ├── pegador.py          # Sistema de pegador controlável
 │   └── trash_can.py        # Latas de lixo
-├── requirements.txt     # Dependências Python
+├── assets/              # Recursos gráficos
+│   ├── rio.png          # Textura animada do rio
+│   ├── margens.png      # Overlay estático das margens
+│   ├── pegador_frente.png   # Sprite do pegador (vista frontal)
+│   ├── pegador_lado.png     # Sprite do pegador (vista lateral)
+│   └── lixo/            # Sprites dos diferentes tipos de lixo
+├── RiverCleanup.spec   # Configuração do PyInstaller
+├── build.sh            # Script de build automatizado
+├── requirements.txt    # Dependências Python
+├── PEGADOR_SYSTEM.md   # Documentação detalhada do sistema de pegador
 └── README.md           # Este arquivo
 ```
 
@@ -65,28 +76,45 @@ Para distribuir o jogo:
 
 ## Controles
 
-- **Mouse Click**: Clique em um objeto flutuante para selecioná-lo
-- **Mouse Move**: Arraste o objeto selecionado até uma lata de lixo
+### Pegador (Pool Net)
+- **Setas Esquerda/Direita**: Move o pegador horizontalmente ao longo da margem inferior
+- **Espaço (Segurar)**: Carrega a barra de força para determinar profundidade do mergulho
+- **Espaço (Soltar)**: Mergulha o pegador para cima no rio para coletar lixo
 - **ESC**: Sair do jogo
+
+### Como Jogar
+1. O pegador inicia na parte inferior da tela (margem)
+2. Posicione o pegador horizontalmente usando as setas
+3. Segure Espaço para carregar a força (barra verde/amarelo/vermelho)
+4. Solte Espaço para mergulhar para cima - quanto mais força, mais profundo no rio
+5. Colete o lixo flutuante colidindo com ele durante o mergulho
+6. O pegador retorna automaticamente à margem inferior com o lixo
+7. Ganhe pontos a cada coleta!
 
 ## Próximos Passos
 
-- [ ] Adicionar sprites/imagens para os objetos
-- [ ] Implementar sistema de spawn automático de objetos
-- [ ] Adicionar diferentes tipos de latas de lixo
-- [ ] Sistema de pontuação com penalidades para lixo errado
+- [ ] Integrar lixeiras para descarte correto (trash_can.py)
+- [ ] Sistema de pontuação com penalidades por tipo errado
+- [ ] Níveis de dificuldade crescente
+- [ ] Obstáculos (crocodilo?)
+- [ ] Power-ups e itens especiais
 - [ ] Efeitos sonoros e música
 - [ ] Menu inicial e tela de game over
-- [ ] Níveis de dificuldade crescente
-- [ ] Partículas e efeitos visuais
+- [ ] Animações de transição para o pegador
+- [ ] Partículas de água durante mergulho
+- [ ] Combos por múltiplas coletas consecutivas
 
 ## Características Atuais
 
 ✅ Loop de jogo básico funcionando
 ✅ Sistema de sprites com Pygame
 ✅ Objetos flutuantes que se movem com o rio
-✅ Latas de lixo estáticas
-✅ Sistema de seleção e arrasto de objetos
-✅ Detecção de colisão entre objetos e latas
-✅ Sistema de pontuação básico
-✅ Efeito visual do rio com linhas de fluxo
+✅ **Sistema de pegador com controle horizontal**
+✅ **Barra de força para controle de profundidade**
+✅ **Captura de lixo durante mergulho**
+✅ **Sistema de estados do pegador (ocioso, carregando, descendo, subindo)**
+✅ **Lixo preso ao pegador durante retorno à margem**
+✅ Sistema de pontuação (pontos por lixo coletado)
+✅ Animação do rio com movimento paralaxo
+✅ Diferentes tipos de lixo (plástico, metal, vidro, papel, misturado)
+✅ Build automatizado com PyInstaller

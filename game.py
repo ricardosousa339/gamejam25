@@ -5,6 +5,7 @@ import pygame
 import random
 from config import *
 from entities.floating_object import FloatingObject
+from entities.pegador import Pegador
 from utils import resource_path
 
 
@@ -46,6 +47,12 @@ class Game:
         # Sprite groups
         self.all_sprites = pygame.sprite.Group()
         self.floating_objects = pygame.sprite.Group()
+        
+        # Create pegador
+        pegador_x = SCREEN_WIDTH // 2
+        pegador_y = PEGADOR_MARGIN_Y
+        self.pegador = Pegador(pegador_x, pegador_y, self.river_band_top, self.river_band_bottom)
+        self.all_sprites.add(self.pegador)
         
         # Spawn timer
         self.last_spawn = pygame.time.get_ticks()
@@ -98,6 +105,16 @@ class Game:
         # Update all sprites
         self.all_sprites.update()
         
+        # Check for pegador collision with trash using the collision_rect
+        if self.pegador.captured_trash is None and self.pegador.state.value == "descending":
+            for trash in self.floating_objects:
+                if self.pegador.collision_rect.colliderect(trash.rect):
+                    # Capture the trash
+                    self.pegador.capture_trash(trash)
+                    self.floating_objects.remove(trash)
+                    self.score += 10  # Add points for collecting trash
+                    break  # Only capture one at a time
+        
         # Remove objects that went off screen (handle both directions)
         for obj in list(self.floating_objects):
             if RIVER_FLOW_SPEED > 0 and obj.rect.right < 0:
@@ -145,6 +162,9 @@ class Game:
         # Draw all sprites
         self.all_sprites.draw(self.screen)
         
+        # Debug: Draw collision rect (uncomment to visualize)
+        # pygame.draw.rect(self.screen, (255, 0, 0), self.pegador.collision_rect, 2)
+        
         # Draw UI
         self._draw_ui()
         
@@ -154,7 +174,38 @@ class Game:
         """Draw UI elements like score"""
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
-        #self.screen.blit(score_text, (10, 10))
+        self.screen.blit(score_text, (10, 10))
+        
+        # Draw force bar when charging
+        if self.pegador.is_charging():
+            bar_width = 200
+            bar_height = 20
+            bar_x = (SCREEN_WIDTH - bar_width) // 2
+            bar_y = SCREEN_HEIGHT - 40
+            
+            # Background bar
+            pygame.draw.rect(self.screen, BLACK, (bar_x - 2, bar_y - 2, bar_width + 4, bar_height + 4))
+            pygame.draw.rect(self.screen, WHITE, (bar_x, bar_y, bar_width, bar_height))
+            
+            # Force bar (filled portion)
+            force_percentage = self.pegador.get_force_percentage()
+            fill_width = int((force_percentage / 100) * bar_width)
+            
+            # Color gradient based on force
+            if force_percentage < 33:
+                bar_color = GREEN
+            elif force_percentage < 66:
+                bar_color = YELLOW
+            else:
+                bar_color = RED
+            
+            pygame.draw.rect(self.screen, bar_color, (bar_x, bar_y, fill_width, bar_height))
+            
+            # Force text
+            force_font = pygame.font.Font(None, 24)
+            force_text = force_font.render("FORÇA", True, WHITE)
+            text_rect = force_text.get_rect(center=(SCREEN_WIDTH // 2, bar_y - 15))
+            self.screen.blit(force_text, text_rect)
 
     def _random_river_y(self):
         """Return a random y within the scaled river band"""
