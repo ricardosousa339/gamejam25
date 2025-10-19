@@ -138,14 +138,7 @@ class Game:
                 obj.kill()
             elif RIVER_FLOW_SPEED < 0 and obj.rect.left > SCREEN_WIDTH:
                 obj.kill()
-
-        # Remove crocodiles that went off screen
-        for croc in list(self.crocodiles):
-            if RIVER_FLOW_SPEED > 0 and croc.rect.right < 0:
-                croc.kill()
-            elif RIVER_FLOW_SPEED < 0 and croc.rect.left > SCREEN_WIDTH:
-                croc.kill()
-
+        
         # Spawn new objects periodically
         current_time = pygame.time.get_ticks()
         if current_time - self.last_spawn > OBJECT_SPAWN_RATE:
@@ -247,7 +240,7 @@ class Game:
 
         # Spawn on the right side of the screen (will move left with river flow)
         # RIVER_FLOW_SPEED is negative, so crocodile enters from right
-        spawn_x = SCREEN_WIDTH + 100
+        spawn_x = 20
 
         crocodile = Crocodile(spawn_x, y, self.river_band_top, self.river_band_bottom)
         self.crocodiles.add(crocodile)
@@ -259,8 +252,7 @@ class Game:
         # Position: left side (x=150), middle of river (y = center of river band)
         debug_x = 150
         debug_y = (self.river_band_top + self.river_band_bottom) // 2
-        debug_control = DebugControl(fixed_x=debug_x, fixed_y=debug_y)
-        debug_croc = Crocodile(debug_x, debug_y, self.river_band_top, self.river_band_bottom, control=debug_control)
+        debug_croc = Crocodile(debug_x, debug_y, self.river_band_top, self.river_band_bottom, control=DebugControl)
         self.crocodiles.add(debug_croc)
         self.all_sprites.add(debug_croc)
         self.debug_crocodile = debug_croc

@@ -42,9 +42,6 @@ class Crocodile(pygame.sprite.Sprite):
         self.max_y = max_y
         self.vel_y = random.uniform(-0.3, 0.3)  # Slight vertical wobble
 
-        # Control system
-        self.control = control if control is not None else CrocodileControl()
-
         # Load all animations
         self._load_animations()
 
@@ -53,10 +50,15 @@ class Crocodile(pygame.sprite.Sprite):
         self.current_anim_index = 0  # Current index in the active animation
 
         # Set initial image and rect
-        self._update_image()
+        current_animation = self.animations[4]
+        self.image = current_animation[0]
+    
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        # Control system ==> alway last init action (control needs crocodile fully started)
+        self.control = control(self) if control is not None else CrocodileControl(self)
 
         print(f"[CROC] Initialized at ({x}, {y}), state: {self.control.current_state}, image size: {self.image.get_size()}")
 
@@ -124,6 +126,7 @@ class Crocodile(pygame.sprite.Sprite):
             # Use scale() instead of smoothscale() to keep pixel art crisp
             scaled.append(pygame.transform.scale(sprite, (width, height)))
         return scaled
+
 
     def _update_image(self):
         """Update the current image based on state and animation frame"""

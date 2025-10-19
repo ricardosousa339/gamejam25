@@ -4,7 +4,7 @@ Separates movement and state transition logic from the crocodile sprite
 """
 import pygame
 import random
-from config import RIVER_FLOW_SPEED
+import config
 
 
 class CrocodileControl:
@@ -17,6 +17,10 @@ class CrocodileControl:
     STATE_CHANGE_MIN_TIME = 2000  # minimum time before changing state
     STATE_CHANGE_MAX_TIME = 5000  # maximum time before changing state
 
+    # Swim direction states
+    TO_RIGH = 1
+    TO_LEFT = 0
+
     # Submersion states (0 = most visible, 4 = fully submerged/invisible)
     FULLY_SURFACED = 0
     MOSTLY_SURFACED = 1
@@ -24,19 +28,36 @@ class CrocodileControl:
     HEAD_ONLY = 3
     FULLY_SUBMERGED = 4  # Invisible - not drawn or updated
 
-    def __init__(self):
+    states_array = [FULLY_SURFACED, MOSTLY_SURFACED, MOSTLY_SUBMERGED, HEAD_ONLY, FULLY_SUBMERGED]
+
+    def __init__(self, crocodile):
         """Initialize the control"""
-        self.current_state = random.randint(0, 4)  # Start at random state (0-4)
+        self.current_state = random.randint(1, 4)  # Start at random state (0-4)
         self.target_state = self.current_state
+        self.swim_direction = random.randint(0, 1)
 
         # State transition timing
         self.state_timer = pygame.time.get_ticks()
+        self.swim_dir_timer = self.state_timer
+        self.swim_vert_timer = self.state_timer
         self.next_state_change = random.randint(
             self.STATE_CHANGE_MIN_TIME,
             self.STATE_CHANGE_MAX_TIME
         )
 
+        self.next_swim_dir_change = random.randint(
+            self.STATE_CHANGE_MIN_TIME,
+            self.STATE_CHANGE_MAX_TIME
+        )
+
+        self.next_swim_vert_change = random.randint(
+            self.STATE_CHANGE_MIN_TIME,
+            self.STATE_CHANGE_MAX_TIME
+        )
+
     def update_movement(self, crocodile, min_y, max_y):
+        current_time = pygame.time.get_ticks()
+        # print('pos: ', crocodile.rect.x, crocodile.rect.y)
         """
         Update crocodile position based on control logic
 
@@ -45,8 +66,33 @@ class CrocodileControl:
             min_y: Minimum y boundary
             max_y: Maximum y boundary
         """
-        # Default behavior: move with river flow and slight vertical wobble
-        crocodile.rect.x += RIVER_FLOW_SPEED
+        # random swim
+        if(self.swim_direction):
+            crocodile.rect.x += 2
+            if(crocodile.rect.x > config.SCREEN_WIDTH + 20):
+                self.swim_direction = 0
+        else:
+            crocodile.rect.x -= 2
+            if(crocodile.rect.x < -20):
+                self.swim_direction = 1
+
+        if current_time - self.swim_vert_timer > self.next_swim_vert_change:
+            old_swim_vert_dir = self.swim_direction
+
+            # Pick a random target state (0-4, including FULLY_SUBMERGED)
+            self.vel_y = random.uniform(-2, 2)
+
+            print(f"[CROC] New Swim Direction (vertical): {old_swim_vert_dir} -> {self.swim_direction}")
+
+            # Reset timer for next change
+            self.swim_vert_timer = current_time
+            self.next_swim_vert_change = random.randint(
+                self.STATE_CHANGE_MIN_TIME,
+                self.STATE_CHANGE_MAX_TIME
+            )
+
+        # small wobble
+        self.vel_y = random.uniform(-0.4, 0.4)
         crocodile.rect.y += crocodile.vel_y
 
         # Keep within vertical bounds with bounce
@@ -69,8 +115,9 @@ class CrocodileControl:
         # Check if it's time to pick a new target state
         if current_time - self.state_timer > self.next_state_change:
             old_target = self.target_state
+
             # Pick a random target state (0-4, including FULLY_SUBMERGED)
-            self.target_state = random.randint(0, 4)
+            self.target_state = self._rand_next_state(old_target)
 
             print(f"[CROC] New target state: {old_target} -> {self.target_state} (current: {self.current_state})")
 
@@ -93,7 +140,32 @@ class CrocodileControl:
             self.current_state -= 1
             print(f"[CROC] Surfacing: {old_state} -> {self.current_state} (target: {self.target_state})")
 
+        # Check if it's time to pick a new swimmin direction state
+        if current_time - self.swim_dir_timer > self.next_swim_dir_change:
+            old_swim_dir = self.swim_direction
+
+            # Pick a random target state (0-4, including FULLY_SUBMERGED)
+            self.swim_direction = random.randint(0, 1)
+
+            print(f"[CROC] New Swim Direction: {old_swim_dir} -> {self.swim_direction}")
+
+            # Reset timer for next change
+            self.swim_dir_timer = current_time
+            self.next_swim_dir_change = random.randint(
+                self.STATE_CHANGE_MIN_TIME,
+                self.STATE_CHANGE_MAX_TIME
+            )
+
         return self.current_state
+    
+    def _rand_next_state(self, curr_state):
+        if(curr_state == 1):
+            return random.randint(1, 2)
+        
+        if(curr_state == 4):
+            return random.randint(3, 4)
+
+        return random.randint(curr_state - 1, curr_state + 1)
 
 
 class DebugControl(CrocodileControl):
@@ -102,7 +174,7 @@ class DebugControl(CrocodileControl):
     Cycles through states in order for testing animations
     """
 
-    def __init__(self, fixed_x, fixed_y):
+    def __init__(self, crocodile):
         """
         Initialize debug control with fixed position
 
@@ -110,14 +182,14 @@ class DebugControl(CrocodileControl):
             fixed_x (int): Fixed x position
             fixed_y (int): Fixed y position
         """
-        super().__init__()
-        self.fixed_x = fixed_x
-        self.fixed_y = fixed_y
+        super().__init__(crocodile)
+        self.fixed_x = 150
+        self.fixed_y = crocodile.rect.y
         # Start at state 0 and cycle through in order
         self.current_state = 0
         self.target_state = 1
         self.transitioning_up = True
-        print(f"[DEBUG CONTROL] Created with fixed position ({fixed_x}, {fixed_y})")
+        print(f"[DEBUG CONTROL] Created with fixed position ({self.fixed_x}, {self.fixed_y})")
 
     def update_movement(self, crocodile, min_y, max_y):
         """
