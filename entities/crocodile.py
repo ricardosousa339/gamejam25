@@ -55,10 +55,18 @@ class Crocodile(pygame.sprite.Sprite):
         # Set initial image and rect
         current_animation = self.animations[4]
         self.image = current_animation[0]
-    
+
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        # Collision mask for pixel-perfect collision detection
+        self.mask = None
+        self._update_mask()
+
+        # Carrying state
+        self.is_carrying_pegador = False
+        self.carried_pegador = None
 
         # Control system ==> alway last init action (control needs crocodile fully started)
         self.control = control(self) if control is not None else CrocodileControl(self)
@@ -131,6 +139,11 @@ class Crocodile(pygame.sprite.Sprite):
         return scaled
 
 
+    def _update_mask(self):
+        """Update the collision mask based on current image"""
+        if self.image is not None:
+            self.mask = pygame.mask.from_surface(self.image)
+
     def _update_image(self):
         """Update the current image based on state and animation frame"""
         current_animation = self.animations[self.control.current_state]
@@ -139,6 +152,9 @@ class Crocodile(pygame.sprite.Sprite):
         # Flip image horizontally if swimming left (swim_direction = 0)
         if self.swim_direction == 0:
             self.image = pygame.transform.flip(self.image, True, False)
+
+        # Update mask whenever image changes
+        self._update_mask()
 
     def update(self):
         """Update crocodile position and animation"""
@@ -161,3 +177,78 @@ class Crocodile(pygame.sprite.Sprite):
 
         # Update the sprite image
         self._update_image()
+
+    def start_carrying_pegador(self, pegador):
+        """
+        Start carrying the pegador
+
+        Args:
+            pegador (Pegador): The pegador to carry
+        """
+        self.is_carrying_pegador = True
+        self.carried_pegador = pegador
+        self.control.start_carrying()
+        print(f"[CROC] Started carrying pegador at ({self.rect.x}, {self.rect.y})")
+
+    def release_pegador(self):
+        """Release the carried pegador and return to normal behavior"""
+        if self.carried_pegador:
+            print(f"[CROC] Releasing pegador at ({self.rect.x}, {self.rect.y})")
+            released_pegador = self.carried_pegador
+            self.carried_pegador = None
+            self.is_carrying_pegador = False
+            self.control.stop_carrying()
+            return released_pegador
+        return None
+
+    def get_mouth_position(self):
+        """
+        Get the position of the crocodile's mouth based on swim direction
+
+        Returns:
+            tuple: (x, y) coordinates of the mouth center position
+        """
+        # Mouth offset from the edge of the sprite
+        # The mouth is near the edge horizontally and centered vertically
+        mouth_offset_from_edge = 10  # pixels from edge
+
+        if self.swim_direction == 1:  # Swimming right (mouth at right end)
+            mouth_x = self.rect.right - mouth_offset_from_edge
+        else:  # Swimming left (mouth at left end)
+            mouth_x = self.rect.left + mouth_offset_from_edge
+
+        # Mouth is at the vertical center of the sprite
+        mouth_y = self.rect.centery
+
+        return (mouth_x, mouth_y)
+
+    def check_collision(self, other_sprite):
+        """
+        Check pixel-perfect collision with another sprite using non-transparent pixels
+
+        Args:
+            other_sprite (pygame.sprite.Sprite): The sprite to check collision with.
+                                                  Must have a 'mask' attribute.
+
+        Returns:
+            bool: True if there is a pixel-perfect collision, False otherwise
+        """
+        # Skip collision check if crocodile is fully submerged
+        if self.control.current_state == 4:  # FULLY_SUBMERGED
+            return False
+
+        # Ensure both sprites have masks
+        if not hasattr(other_sprite, 'mask') or other_sprite.mask is None:
+            return False
+
+        if self.mask is None:
+            return False
+
+        # Calculate offset between the two sprites
+        offset_x = other_sprite.rect.x - self.rect.x
+        offset_y = other_sprite.rect.y - self.rect.y
+
+        # Check if masks overlap (returns None if no collision, otherwise returns contact point)
+        overlap = self.mask.overlap(other_sprite.mask, (offset_x, offset_y))
+
+        return overlap is not None

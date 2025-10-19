@@ -122,6 +122,15 @@ class Game:
         # Update all sprites
         self.all_sprites.update()
         
+        # Check for pegador collision with crocodiles using pixel-perfect detection
+        if self.pegador.state.value in ["descending", "ascending"]:
+            for crocodile in self.crocodiles:
+                if crocodile.check_collision(self.pegador):
+                    # Pegador gets caught by the crocodile
+                    self.pegador.get_caught_by_crocodile(crocodile)
+                    crocodile.start_carrying_pegador(self.pegador)
+                    break  # Only one crocodile can catch at a time
+
         # Check for pegador collision with trash using the collision_rect
         if self.pegador.captured_trash is None and self.pegador.state.value == "descending":
             for trash in self.floating_objects:

@@ -5,6 +5,7 @@ Separates movement and state transition logic from the crocodile sprite
 import pygame
 import random
 import config
+from entities.pegador import PegadorState
 
 
 class CrocodileControl:
@@ -55,6 +56,26 @@ class CrocodileControl:
         # Vertical movement velocity
         self.vel_y = random.uniform(-1.5, 1.5)
 
+        # Carrying pegador state
+        self.is_carrying = False
+        self.carrying_start_time = 0
+        self.waiting_at_edge = False
+        self.wait_start_time = 0
+        self.wait_duration = 1000  # 1 second wait
+
+    def start_carrying(self):
+        """Start carrying a pegador"""
+        self.is_carrying = True
+        self.carrying_start_time = pygame.time.get_ticks()
+        self.waiting_at_edge = False
+        print("[CONTROL] Started carrying mode")
+
+    def stop_carrying(self):
+        """Stop carrying and return to normal behavior"""
+        self.is_carrying = False
+        self.waiting_at_edge = False
+        print("[CONTROL] Stopped carrying mode")
+
     def update_movement(self, crocodile, min_y, max_y):
         current_time = pygame.time.get_ticks()
         # print('pos: ', crocodile.rect.x, crocodile.rect.y)
@@ -66,7 +87,44 @@ class CrocodileControl:
             min_y: Minimum y boundary
             max_y: Maximum y boundary
         """
-        # random swim
+        # Special behavior when carrying pegador
+        if self.is_carrying:
+            if self.waiting_at_edge:
+                # Waiting at edge for 1 second before returning
+                if current_time - self.wait_start_time > self.wait_duration:
+                    # Return pegador and crocodile to normal
+                    pegador = crocodile.release_pegador()
+                    if pegador:
+                        pegador.state = PegadorState.IDLE
+                        pegador.catching_crocodile = None
+                        pegador.image = pegador.image_front
+                        pegador.mask = pygame.mask.from_surface(pegador.image)
+                        # Reset pegador to margin at horizontal center
+                        pegador.rect.centerx = config.SCREEN_WIDTH // 2
+                        pegador.rect.top = pegador.margin_y
+                        pegador.collision_rect.centerx = pegador.rect.centerx
+                        pegador.collision_rect.top = pegador.rect.top
+                    self.stop_carrying()
+                return  # Don't move while waiting
+
+            # Continue swimming in current direction until off screen
+            if crocodile.swim_direction == 1:  # Swimming right
+                crocodile.rect.x += 2
+                # Check if completely off screen (right edge)
+                if crocodile.rect.left > config.SCREEN_WIDTH:
+                    self.waiting_at_edge = True
+                    self.wait_start_time = current_time
+                    print("[CONTROL] Reached right edge, waiting...")
+            else:  # Swimming left
+                crocodile.rect.x -= 2
+                # Check if completely off screen (left edge)
+                if crocodile.rect.right < 0:
+                    self.waiting_at_edge = True
+                    self.wait_start_time = current_time
+                    print("[CONTROL] Reached left edge, waiting...")
+            return  # Skip normal movement behavior
+
+        # Normal random swim behavior
         if(crocodile.swim_direction):
             crocodile.rect.x += 2
             if(crocodile.rect.x > config.SCREEN_WIDTH + 20):

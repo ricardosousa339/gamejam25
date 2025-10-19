@@ -15,6 +15,7 @@ class PegadorState(Enum):
     ASCENDING = "ascending"  # Returning to margin (bottom)
     SHOWING_CATCH = "showing_catch"  # Showing caught trash at margin (1 second delay)
     STUNNED = "stunned"  # Hit by crocodile, cannot move
+    CAUGHT_BY_CROCODILE = "caught_by_crocodile"  # Caught by crocodile, following it
 
 
 class Pegador(pygame.sprite.Sprite):
@@ -48,11 +49,14 @@ class Pegador(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.top = y  # Position from top (half will be below screen)
-        
+
         # Collision rect - smaller area at the net part (top portion of the pegador)
         self.collision_rect = pygame.Rect(0, 0, front_width - 10, 60)
         self.collision_rect.centerx = self.rect.centerx
         self.collision_rect.top = self.rect.top
+
+        # Collision mask for pixel-perfect collision detection
+        self.mask = pygame.mask.from_surface(self.image)
         
         # State management
         self.state = PegadorState.IDLE
@@ -72,11 +76,15 @@ class Pegador(pygame.sprite.Sprite):
         # Show catch delay timer
         self.show_catch_timer = 0
         self.show_catch_duration = 500  # 1 second to show the catch
+
+        # Crocodile reference when caught
+        self.catching_crocodile = None
+        self.catch_offset_y = 0  # Vertical offset from mouth position where pegador was caught
         
     def update(self):
         """Update pegador state and position"""
         keys = pygame.key.get_pressed()
-        
+
         if self.state == PegadorState.IDLE:
             self._update_idle(keys)
         elif self.state == PegadorState.CHARGING:
@@ -87,6 +95,8 @@ class Pegador(pygame.sprite.Sprite):
             self._update_ascending()
         elif self.state == PegadorState.SHOWING_CATCH:
             self._update_showing_catch()
+        elif self.state == PegadorState.CAUGHT_BY_CROCODILE:
+            self._update_caught_by_crocodile()
     
     def _update_idle(self, keys):
         """Handle idle state - horizontal movement at margin"""
@@ -109,6 +119,7 @@ class Pegador(pygame.sprite.Sprite):
             self.state = PegadorState.CHARGING
             self.force = 0
             self.image = self.image_side  # Switch to side view when diving
+            self.mask = pygame.mask.from_surface(self.image)  # Update mask
     
     def _update_charging(self, keys):
         """Handle charging state - building up force"""
@@ -157,6 +168,7 @@ class Pegador(pygame.sprite.Sprite):
         if self.rect.centery <= self.max_depth:
             self.state = PegadorState.ASCENDING
             self.image = self.image_front  # Switch back to front view when ascending
+            self.mask = pygame.mask.from_surface(self.image)  # Update mask
     
     def _update_ascending(self):
         """Handle ascending state - returning to margin (bottom)"""
@@ -182,11 +194,13 @@ class Pegador(pygame.sprite.Sprite):
                 self.show_catch_timer = 0
                 self.force = 0
                 self.image = self.image_front
+                self.mask = pygame.mask.from_surface(self.image)  # Update mask
             else:
                 # No trash, go directly to IDLE
                 self.state = PegadorState.IDLE
                 self.force = 0
                 self.image = self.image_front
+                self.mask = pygame.mask.from_surface(self.image)  # Update mask
     
     def _update_showing_catch(self):
         """Handle showing catch state - display caught trash for 1 second"""
@@ -226,3 +240,53 @@ class Pegador(pygame.sprite.Sprite):
     def is_charging(self):
         """Check if currently charging"""
         return self.state == PegadorState.CHARGING
+
+    def get_caught_by_crocodile(self, crocodile):
+        """
+        Pegador gets caught by a crocodile and starts following it
+
+        Args:
+            crocodile (Crocodile): The crocodile that caught the pegador
+        """
+        print(f"[PEGADOR] Caught by crocodile at ({crocodile.rect.x}, {crocodile.rect.y})")
+
+        # Change state to caught
+        self.state = PegadorState.CAUGHT_BY_CROCODILE
+        self.catching_crocodile = crocodile
+
+        # Calculate and store the vertical offset from the mouth where pegador was caught
+        _, mouth_y = crocodile.get_mouth_position()
+        self.catch_offset_y = self.rect.centery - mouth_y
+
+        print(f"[PEGADOR] Catch vertical offset from mouth: {self.catch_offset_y}")
+
+        # Drop any captured trash
+        if self.captured_trash:
+            self.captured_trash.kill()
+            self.captured_trash = None
+
+        # Switch to side view
+        self.image = self.image_side
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def _update_caught_by_crocodile(self):
+        """Handle caught by crocodile state - follow the crocodile's mouth with stored offset"""
+        if self.catching_crocodile is None:
+            # Safety check: if crocodile reference is lost, return to idle
+            print("[PEGADOR] Lost crocodile reference, returning to idle")
+            self.state = PegadorState.IDLE
+            self.image = self.image_front
+            self.mask = pygame.mask.from_surface(self.image)
+            return
+
+        # Get the mouth position from the crocodile
+        mouth_x, mouth_y = self.catching_crocodile.get_mouth_position()
+
+        # Position pegador horizontally at mouth, vertically with the original offset
+        # This makes it look like the crocodile is holding the pegador at the height it was caught
+        self.rect.centerx = mouth_x
+        self.rect.centery = mouth_y + self.catch_offset_y
+
+        # Update collision rect
+        self.collision_rect.centerx = self.rect.centerx
+        self.collision_rect.top = self.rect.top
