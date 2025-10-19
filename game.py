@@ -130,6 +130,10 @@ class Game:
                     # Pegador gets caught by the crocodile
                     self.pegador.get_caught_by_crocodile(crocodile)
                     crocodile.start_carrying_pegador(self.pegador)
+                    
+                    # Play crocodile attack sound
+                    self._play_crocodile_sound()
+                    
                     break  # Only one crocodile can catch at a time
 
         # Check for pegador collision with trash using the collision_rect
@@ -278,3 +282,13 @@ class Game:
         print(f"Initial state: {debug_croc.control.current_state}")
         print("States cycle: 0->1->2->3->4->0 (4=invisible)")
         print("=" * 50)
+    
+    def _play_crocodile_sound(self):
+        """Play crocodile attack sound"""
+        if SOUND_ENABLED and pygame.mixer.get_init():
+            try:
+                croc_sound = pygame.mixer.Sound(resource_path('assets/sons/crocodilo_agua.ogg'))
+                croc_sound.set_volume(CROCODILE_SOUND_VOLUME)
+                croc_sound.play()
+            except (pygame.error, FileNotFoundError) as e:
+                print(f"Warning: Could not play crocodile sound: {e}")
