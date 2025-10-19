@@ -144,7 +144,13 @@ class Pegador(pygame.sprite.Sprite):
             # Space released, start descending (going UP into the river)
             # Calculate how far UP the pegador will go based on force
             # Limit dive to the river band where trash floats
-            force_ratio = self.force / PEGADOR_MAX_FORCE
+            linear_ratio = self.force / PEGADOR_MAX_FORCE
+            
+            # Apply aggressive ease-in curve:
+            # - VERY slow start (need to hold much longer to dive deep)
+            # - Only after 50% force it starts going far
+            # - Using cubic curve: x³ for aggressive start
+            force_ratio = linear_ratio * linear_ratio * linear_ratio
             
             # Minimum depth: just inside the bottom of the river band
             min_dive_y = self.river_band_bottom
