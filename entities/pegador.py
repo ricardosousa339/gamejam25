@@ -13,6 +13,8 @@ class PegadorState(Enum):
     CHARGING = "charging"  # Holding space, charging force bar
     DESCENDING = "descending"  # Released space, moving up into river
     ASCENDING = "ascending"  # Returning to margin (bottom)
+    SHOWING_CATCH = "showing_catch"  # Showing caught trash at margin (1 second delay)
+    STUNNED = "stunned"  # Hit by crocodile, cannot move
 
 
 class Pegador(pygame.sprite.Sprite):
@@ -28,7 +30,7 @@ class Pegador(pygame.sprite.Sprite):
         """
         super().__init__()
         
-        # Load sprites - use the long version
+        # Load sprites - both are long versions (300px height)
         pegador_front = pygame.image.load(resource_path('assets/pegador_frente_comprido.png')).convert_alpha()
         pegador_side = pygame.image.load(resource_path('assets/pegador_lado.png')).convert_alpha()
         
@@ -67,6 +69,10 @@ class Pegador(pygame.sprite.Sprite):
         # Captured trash
         self.captured_trash = None
         
+        # Show catch delay timer
+        self.show_catch_timer = 0
+        self.show_catch_duration = 500  # 1 second to show the catch
+        
     def update(self):
         """Update pegador state and position"""
         keys = pygame.key.get_pressed()
@@ -79,6 +85,8 @@ class Pegador(pygame.sprite.Sprite):
             self._update_descending()
         elif self.state == PegadorState.ASCENDING:
             self._update_ascending()
+        elif self.state == PegadorState.SHOWING_CATCH:
+            self._update_showing_catch()
     
     def _update_idle(self, keys):
         """Handle idle state - horizontal movement at margin"""
@@ -100,7 +108,7 @@ class Pegador(pygame.sprite.Sprite):
         if keys[pygame.K_SPACE]:
             self.state = PegadorState.CHARGING
             self.force = 0
-            self.image = self.image_side  # Switch to side view
+            self.image = self.image_side  # Switch to side view when diving
     
     def _update_charging(self, keys):
         """Handle charging state - building up force"""
@@ -148,6 +156,7 @@ class Pegador(pygame.sprite.Sprite):
         # Check if reached target depth
         if self.rect.centery <= self.max_depth:
             self.state = PegadorState.ASCENDING
+            self.image = self.image_front  # Switch back to front view when ascending
     
     def _update_ascending(self):
         """Handle ascending state - returning to margin (bottom)"""
@@ -166,14 +175,36 @@ class Pegador(pygame.sprite.Sprite):
         if self.rect.top >= self.margin_y:
             self.rect.top = self.margin_y
             self.collision_rect.top = self.rect.top
-            self.state = PegadorState.IDLE
-            self.force = 0
-            self.image = self.image_front  # Switch back to front view
             
-            # Release captured trash
+            # If carrying trash, go to SHOWING_CATCH state for 1 second
+            if self.captured_trash:
+                self.state = PegadorState.SHOWING_CATCH
+                self.show_catch_timer = 0
+                self.force = 0
+                self.image = self.image_front
+            else:
+                # No trash, go directly to IDLE
+                self.state = PegadorState.IDLE
+                self.force = 0
+                self.image = self.image_front
+    
+    def _update_showing_catch(self):
+        """Handle showing catch state - display caught trash for 1 second"""
+        # Keep trash at margin position
+        if self.captured_trash:
+            self.captured_trash.rect.centerx = self.rect.centerx
+            self.captured_trash.rect.centery = self.rect.top + 20
+        
+        # Update timer
+        self.show_catch_timer += 16  # Approximate ms per frame (60 FPS)
+        
+        # After 1 second, release trash and go to IDLE
+        if self.show_catch_timer >= self.show_catch_duration:
             if self.captured_trash:
                 self.captured_trash.kill()
                 self.captured_trash = None
+            self.state = PegadorState.IDLE
+            self.show_catch_timer = 0
     
     def capture_trash(self, trash):
         """
