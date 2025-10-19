@@ -10,6 +10,7 @@ from entities.crocodile_control import DebugControl
 from entities.pegador import Pegador
 from entities.pegador_counter import PegadorCounter
 from entities.splash import Splash
+from entities.placa import Placa
 from utils import resource_path
 
 
@@ -68,6 +69,12 @@ class Game:
 
         # Create pegador counter (lives/HP system)
         self.pegador_counter = PegadorCounter(max_lives=3)
+        
+        # Create placa (environmental message sign) at top center
+        placa_x = SCREEN_WIDTH // 2
+        placa_y = 10  # 10 pixels from top
+        self.placa = Placa(placa_x, placa_y)
+        self.all_sprites.add(self.placa)
 
         # Spawn timer
         self.last_spawn = pygame.time.get_ticks()
