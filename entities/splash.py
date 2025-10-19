@@ -3,6 +3,7 @@ Splash animation entity - plays when pegador catches trash
 """
 import pygame
 from utils import resource_path
+from config import SOUND_ENABLED, SPLASH_SOUND_VOLUME
 
 
 class Splash(pygame.sprite.Sprite):
@@ -40,6 +41,15 @@ class Splash(pygame.sprite.Sprite):
         
         # Flag to track if animation is complete
         self.animation_complete = False
+        
+        # Play splash sound
+        if SOUND_ENABLED and pygame.mixer.get_init():
+            try:
+                splash_sound = pygame.mixer.Sound(resource_path('assets/sons/water_splash.ogg'))
+                splash_sound.set_volume(SPLASH_SOUND_VOLUME)
+                splash_sound.play()
+            except (pygame.error, FileNotFoundError) as e:
+                print(f"Warning: Could not play splash sound: {e}")
     
     def update(self):
         """Update animation frame"""

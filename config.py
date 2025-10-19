@@ -60,3 +60,8 @@ OBJECT_TYPES = {
     "glass-bottle": ObjectType("glass", "./assets/lixo/vidro.png", 1),
     "glass-bottle2": ObjectType("glass", "./assets/lixo/vidro2.png", 1),
 }
+
+# Sound settings
+SOUND_ENABLED = True
+SPLASH_SOUND_VOLUME = 0.7  # 0.0 to 1.0
+CROCODILE_SOUND_VOLUME = 0.8  # 0.0 to 1.0
