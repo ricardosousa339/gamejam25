@@ -77,6 +77,9 @@ class Pegador(pygame.sprite.Sprite):
         self.show_catch_timer = 0
         self.show_catch_duration = 500  # 1 second to show the catch
 
+        # Stunned timer
+        self.stunned_timer = 0
+
         # Crocodile reference when caught
         self.catching_crocodile = None
         self.catch_offset_y = 0  # Vertical offset from mouth position where pegador was caught
@@ -95,6 +98,8 @@ class Pegador(pygame.sprite.Sprite):
             self._update_ascending()
         elif self.state == PegadorState.SHOWING_CATCH:
             self._update_showing_catch()
+        elif self.state == PegadorState.STUNNED:
+            self._update_stunned()
         elif self.state == PegadorState.CAUGHT_BY_CROCODILE:
             self._update_caught_by_crocodile()
     
@@ -128,32 +133,41 @@ class Pegador(pygame.sprite.Sprite):
             self.rect.x -= PEGADOR_SPEED
         if keys[pygame.K_RIGHT]:
             self.rect.x += PEGADOR_SPEED
-        
+
         # Keep within screen bounds
         self.rect.left = max(0, self.rect.left)
         self.rect.right = min(SCREEN_WIDTH, self.rect.right)
-        
+
         # Update collision rect
         self.collision_rect.centerx = self.rect.centerx
         self.collision_rect.top = self.rect.top
-        
+
         # Charge force
         if keys[pygame.K_SPACE]:
-            self.force = min(self.force + PEGADOR_FORCE_CHARGE_RATE, PEGADOR_MAX_FORCE)
+            # Check if reached max force
+            if self.force >= PEGADOR_MAX_FORCE:
+                # Enter STUNNED state
+                self.force = 0
+                self.state = PegadorState.STUNNED
+                self.stunned_timer = 0
+                self.image = self.image_front
+                self.mask = pygame.mask.from_surface(self.image)
+            else:
+                self.force = min(self.force + PEGADOR_FORCE_CHARGE_RATE, PEGADOR_MAX_FORCE)
         else:
             # Space released, start descending (going UP into the river)
             # Calculate how far UP the pegador will go based on force
             # Limit dive to the river band where trash floats
             force_ratio = self.force / PEGADOR_MAX_FORCE
-            
+
             # Minimum depth: just inside the bottom of the river band
             min_dive_y = self.river_band_bottom
             # Maximum depth: top of the river band
             max_dive_y = self.river_band_top
-            
+
             # Calculate target depth based on force (interpolate between min and max)
             self.max_depth = min_dive_y - (force_ratio * (min_dive_y - max_dive_y))
-            
+
             self.state = PegadorState.DESCENDING
     
     def _update_descending(self):
@@ -208,10 +222,10 @@ class Pegador(pygame.sprite.Sprite):
         if self.captured_trash:
             self.captured_trash.rect.centerx = self.rect.centerx
             self.captured_trash.rect.centery = self.rect.top + 20
-        
+
         # Update timer
         self.show_catch_timer += 16  # Approximate ms per frame (60 FPS)
-        
+
         # After 1 second, release trash and go to IDLE
         if self.show_catch_timer >= self.show_catch_duration:
             if self.captured_trash:
@@ -219,7 +233,18 @@ class Pegador(pygame.sprite.Sprite):
                 self.captured_trash = None
             self.state = PegadorState.IDLE
             self.show_catch_timer = 0
-    
+
+    def _update_stunned(self):
+        """Handle stunned state - pegador is stunned for 1 second after maxing out force bar"""
+        # Update timer
+        self.stunned_timer += 16  # Approximate ms per frame (60 FPS)
+
+        # After the stunned duration, return to IDLE
+        if self.stunned_timer >= PEGADOR_STUNNED_DURATION:
+            self.state = PegadorState.IDLE
+            self.stunned_timer = 0
+            self.force = 0
+
     def capture_trash(self, trash):
         """
         Capture a trash object

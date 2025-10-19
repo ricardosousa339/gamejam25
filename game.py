@@ -237,12 +237,12 @@ class Game:
         score_text = font.render(f"Score: {self.score}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
         
-        # Draw force bar when charging
+        # Draw force bar when charging (bottom right corner)
         if self.pegador.is_charging():
             bar_width = 200
             bar_height = 20
-            bar_x = (SCREEN_WIDTH - bar_width) // 2
-            bar_y = SCREEN_HEIGHT - 40
+            bar_x = SCREEN_WIDTH - bar_width - 20  # 20px margin from right
+            bar_y = SCREEN_HEIGHT - bar_height - 20  # 20px margin from bottom
             
             # Background bar
             pygame.draw.rect(self.screen, BLACK, (bar_x - 2, bar_y - 2, bar_width + 4, bar_height + 4))
@@ -261,11 +261,11 @@ class Game:
                 bar_color = RED
             
             pygame.draw.rect(self.screen, bar_color, (bar_x, bar_y, fill_width, bar_height))
-            
-            # Force text
+
+            # Force text (centered above the bar)
             force_font = pygame.font.Font(None, 24)
             force_text = force_font.render("FORÇA", True, WHITE)
-            text_rect = force_text.get_rect(center=(SCREEN_WIDTH // 2, bar_y - 15))
+            text_rect = force_text.get_rect(center=(bar_x + bar_width // 2, bar_y - 15))
             self.screen.blit(force_text, text_rect)
 
     def _random_river_y(self):

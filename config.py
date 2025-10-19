@@ -34,8 +34,9 @@ PEGADOR_SPEED = 5  # Horizontal movement speed
 PEGADOR_VERTICAL_SPEED = 8  # Vertical movement speed
 PEGADOR_MAX_FORCE = 100  # Maximum force for depth
 PEGADOR_FORCE_CHARGE_RATE = 2  # How fast the force bar charges
-PEGADOR_MARGIN_Y = SCREEN_HEIGHT - 100  # Y position when at the margin (mostly off-screen)
+PEGADOR_MARGIN_Y = SCREEN_HEIGHT - 92  # Y position when at the margin (mostly off-screen)
 PEGADOR_SCALE = 1.0  # Scale factor for pegador sprite
+PEGADOR_STUNNED_DURATION = 1000  # Duration in milliseconds when stunned after maxing out force bar
 
 # Crocodile capture animation settings
 CROCODILE_CAPTURE_DURATION = 600  # milliseconds - duration of capture animation (emerge + wobble)
