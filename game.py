@@ -128,7 +128,15 @@ class Game:
         
         # Update all sprites
         self.all_sprites.update()
-        
+
+        # Process crocodile splash events
+        for crocodile in self.crocodiles:
+            while crocodile.pending_splashes:
+                event_type, splash_x, splash_y = crocodile.pending_splashes.pop(0)
+                splash = Splash(splash_x, splash_y)
+                self.all_sprites.add(splash)
+                print(f"[GAME] Created {event_type} splash at ({splash_x}, {splash_y})")
+
         # Check for pegador collision with crocodiles using pixel-perfect detection
         if self.pegador.state.value in ["descending", "ascending"]:
             for crocodile in self.crocodiles:

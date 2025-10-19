@@ -68,6 +68,9 @@ class Crocodile(pygame.sprite.Sprite):
         self.is_carrying_pegador = False
         self.carried_pegador = None
 
+        # Splash events queue - list of (event_type, x, y) tuples
+        self.pending_splashes = []
+
         # Control system ==> alway last init action (control needs crocodile fully started)
         self.control = control(self) if control is not None else CrocodileControl(self)
 
