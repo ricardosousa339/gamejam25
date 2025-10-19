@@ -8,6 +8,7 @@ from entities.floating_object import FloatingObject
 from entities.crocodile import Crocodile
 from entities.crocodile_control import DebugControl
 from entities.pegador import Pegador
+from entities.pegador_counter import PegadorCounter
 from entities.splash import Splash
 from utils import resource_path
 
@@ -64,7 +65,12 @@ class Game:
         pegador_y = PEGADOR_MARGIN_Y
         self.pegador = Pegador(pegador_x, pegador_y, self.river_band_top, self.river_band_bottom)
         self.all_sprites.add(self.pegador)
-        
+
+        # Create pegador counter (lives/HP system)
+        counter_x = 20  # Left margin
+        counter_y = SCREEN_HEIGHT - 83  # Bottom left corner (closer to bottom)
+        self.pegador_counter = PegadorCounter(counter_x, counter_y, max_lives=3)
+
         # Spawn timer
         self.last_spawn = pygame.time.get_ticks()
         
@@ -130,6 +136,13 @@ class Game:
                     # Pegador gets caught by the crocodile
                     self.pegador.get_caught_by_crocodile(crocodile)
                     crocodile.start_carrying_pegador(self.pegador)
+
+                    # Lose a life
+                    if not self.pegador_counter.lose_life():
+                        # Game over - no lives left
+                        self.running = False
+                        print("[GAME] Game Over - No lives remaining!")
+
                     
                     # Play crocodile attack sound
                     self._play_crocodile_sound()
@@ -213,7 +226,11 @@ class Game:
         pygame.display.flip()
     
     def _draw_ui(self):
-        """Draw UI elements like score"""
+        """Draw UI elements like score and lives"""
+        # Draw pegador counter (lives) at bottom left
+        self.pegador_counter.draw(self.screen)
+
+        # Draw score at top left (original position)
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
