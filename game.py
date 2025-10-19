@@ -132,19 +132,22 @@ class Game:
                     crocodile.start_carrying_pegador(self.pegador)
                     break  # Only one crocodile can catch at a time
 
-        # Check for pegador collision with trash using the collision_rect
+        # Check for pegador collision with trash using pixel-perfect collision
         if self.pegador.captured_trash is None and self.pegador.state.value == "descending":
             for trash in self.floating_objects:
+                # First check bounding box collision for performance
                 if self.pegador.collision_rect.colliderect(trash.rect):
-                    # Capture the trash and create splash animation
-                    if self.pegador.capture_trash(trash):
-                        # Create splash at collision point
-                        splash = Splash(trash.rect.centerx, trash.rect.centery)
-                        self.all_sprites.add(splash)
-                    
-                    self.floating_objects.remove(trash)
-                    self.score += 10  # Add points for collecting trash
-                    break  # Only capture one at a time
+                    # Then check pixel-perfect collision
+                    if trash.check_collision(self.pegador):
+                        # Capture the trash and create splash animation
+                        if self.pegador.capture_trash(trash):
+                            # Create splash at collision point
+                            splash = Splash(trash.rect.centerx, trash.rect.centery)
+                            self.all_sprites.add(splash)
+
+                        self.floating_objects.remove(trash)
+                        self.score += 10  # Add points for collecting trash
+                        break  # Only capture one at a time
         
         # Remove objects that went off screen (handle both directions)
         for obj in list(self.floating_objects):

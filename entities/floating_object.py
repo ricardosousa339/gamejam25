@@ -40,12 +40,15 @@ class FloatingObject(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        
+
+        # Collision mask for pixel-perfect collision detection
+        self.mask = pygame.mask.from_surface(self.image)
+
         # Movement properties - synchronized with river flow
         self.vel_y = random.uniform(-0.5, 0.5)  # Slight vertical wobble
         self.min_y = min_y
         self.max_y = max_y
-        
+
         # Capture state
         self.is_captured = False
     
@@ -56,7 +59,7 @@ class FloatingObject(pygame.sprite.Sprite):
             # Float with the river - stay in sync with the water texture
             self.rect.x -= RIVER_FLOW_SPEED
             self.rect.y += self.vel_y
-            
+
             # Keep within vertical bounds with bounce
             if self.rect.top < self.min_y:
                 self.rect.top = self.min_y
@@ -64,3 +67,30 @@ class FloatingObject(pygame.sprite.Sprite):
             elif self.rect.bottom > self.max_y:
                 self.rect.bottom = self.max_y
                 self.vel_y *= -1
+
+    def check_collision(self, other_sprite):
+        """
+        Check pixel-perfect collision with another sprite using non-transparent pixels
+
+        Args:
+            other_sprite (pygame.sprite.Sprite): The sprite to check collision with.
+                                                  Must have a 'mask' attribute.
+
+        Returns:
+            bool: True if there is a pixel-perfect collision, False otherwise
+        """
+        # Ensure both sprites have masks
+        if not hasattr(other_sprite, 'mask') or other_sprite.mask is None:
+            return False
+
+        if self.mask is None:
+            return False
+
+        # Calculate offset between the two sprites
+        offset_x = other_sprite.rect.x - self.rect.x
+        offset_y = other_sprite.rect.y - self.rect.y
+
+        # Check if masks overlap (returns None if no collision, otherwise returns contact point)
+        overlap = self.mask.overlap(other_sprite.mask, (offset_x, offset_y))
+
+        return overlap is not None
