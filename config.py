@@ -22,7 +22,7 @@ RIVER_FLOW_COLOR = (100, 180, 230)  # Lighter blue for flow lines
 
 # Game settings
 GRAVITY = 0.5
-RIVER_FLOW_SPEED = 2
+RIVER_FLOW_SPEED = -2
 OBJECT_SPAWN_RATE = 2000  # milliseconds
 
 # Object types and colors

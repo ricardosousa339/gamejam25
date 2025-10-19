@@ -36,13 +36,17 @@ class FloatingObject(pygame.sprite.Sprite):
     
     def update(self):
         """Update the floating object position"""
-        # Float with the river from left to right - always use RIVER_FLOW_SPEED directly
-        self.rect.x += RIVER_FLOW_SPEED
+        # Float with the river - stay in sync with the water texture
+        # The river background moves by: x_pos = position - offset
+        # As offset increases, background shifts left (water appears to flow right)
+        # Objects floating ON the water should move with the WATER, not the camera
+        # So they should move in the OPPOSITE direction of the offset change
+        self.rect.x -= RIVER_FLOW_SPEED  # Inverted to match water flow
         self.rect.y += self.vel_y
         
-        # Keep within vertical bounds with bounce
-        if self.rect.top < 50:
-            self.rect.top = 50
+        # Keep within vertical bounds with bounce (between pixels 100-225)
+        if self.rect.top < 100:
+            self.rect.top = 100
             self.vel_y *= -1
         elif self.rect.bottom > SCREEN_HEIGHT - 50:
             self.rect.bottom = SCREEN_HEIGHT - 50

@@ -47,7 +47,7 @@ class Game:
         """Set up initial game objects"""
         # Create some initial floating objects
         for i in range(3):
-            y = random.randint(100, SCREEN_HEIGHT - 100)
+            y = random.randint(100, 225)  # Spawn only between pixels 100-225
             x = random.randint(0, SCREEN_WIDTH)
             obj_type = random.choice(list(OBJECT_TYPES.keys()))
             floating_obj = FloatingObject(x, y, obj_type)
@@ -100,7 +100,7 @@ class Game:
         current_time = pygame.time.get_ticks()
         if current_time - self.last_spawn > OBJECT_SPAWN_RATE:
             self.last_spawn = current_time
-            y = random.randint(100, SCREEN_HEIGHT - 100)
+            y = random.randint(100, 225)  # Spawn only between pixels 100-225
             obj_type = random.choice(list(OBJECT_TYPES.keys()))
             
             # Spawn from left if moving right, from right if moving left
