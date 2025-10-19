@@ -1,8 +1,8 @@
-# River Cleanup Game - AI Coding Agent Instructions
+# Crocolixo - AI Coding Agent Instructions
 
 ## Project Overview
 
-A Pygame-based 2D river cleanup game where players collect floating trash and dispose of it in appropriate bins. Built for Game Jam 2025, this project emphasizes cross-platform distribution with PyInstaller bundling.
+Crocolixo is a Pygame-based 2D river cleanup game where players use a pool net to collect floating trash while avoiding crocodiles. Built for Game Jam 2025, this project emphasizes cross-platform distribution with PyInstaller bundling and educational environmental messaging.
 
 ## Architecture & Key Concepts
 
@@ -74,10 +74,10 @@ python main.py            # Run game directly
 ```bash
 ./build.sh                # Interactive build with auto-cleanup
 # OR
-pyinstaller --clean RiverCleanup.spec  # Manual build
+pyinstaller --clean Crocolixo.spec  # Manual build
 ```
 
-**Critical**: `RiverCleanup.spec` is version controlled (`.gitignore` exception). Contains:
+**Critical**: `Crocolixo.spec` is version controlled (`.gitignore` exception). Contains:
 - `datas=[('assets', 'assets')]` - Bundles entire assets folder
 - `console=False` - No terminal window on launch
 - `onedir` mode - Executable + `_internal/` folder structure
@@ -129,9 +129,9 @@ from utils import resource_path
 No formal test suite exists. Manual validation:
 ```bash
 # Test executable works post-build
-cd dist/RiverCleanup/
-./RiverCleanup  # Linux
-# RiverCleanup.exe on Windows
+cd dist/Crocolixo/
+./Crocolixo  # Linux
+# Crocolixo.exe on Windows
 ```
 
 Check for:

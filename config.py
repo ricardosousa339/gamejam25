@@ -6,7 +6,7 @@ Game configuration and constants
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 60
-GAME_TITLE = "River Cleanup"
+GAME_TITLE = "Crocolixo"
 
 # Colors (R, G, B)
 WHITE = (255, 255, 255)

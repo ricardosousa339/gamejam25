@@ -1,6 +1,6 @@
-# Game Jam 2025 - River Cleanup
+# Game Jam 2025 - Crocolixo
 
-Um jogo de limpeza do rio onde você coleta objetos flutuantes e os coloca nas latas de lixo apropriadas.
+Um jogo de limpeza do rio onde você coleta objetos flutuantes usando um pegador de piscina, enfrentando crocodilos e aprendendo sobre consciência ambiental.
 
 ## Estrutura do Projeto
 
@@ -21,7 +21,7 @@ gamejam25/
 │   ├── pegador_frente.png   # Sprite do pegador (vista frontal)
 │   ├── pegador_lado.png     # Sprite do pegador (vista lateral)
 │   └── lixo/            # Sprites dos diferentes tipos de lixo
-├── RiverCleanup.spec   # Configuração do PyInstaller
+├── Crocolixo.spec      # Configuração do PyInstaller
 ├── build.sh            # Script de build automatizado
 ├── requirements.txt    # Dependências Python
 ├── PEGADOR_SYSTEM.md   # Documentação detalhada do sistema de pegador
@@ -57,10 +57,10 @@ Para criar um executável distribuível:
 ./build.sh
 
 # Ou manualmente
-pyinstaller --clean RiverCleanup.spec
+pyinstaller --clean Crocolixo.spec
 ```
 
-O executável estará em `dist/RiverCleanup/`
+O executável estará em `dist/Crocolixo/`
 
 ### Documentação Completa
 
@@ -70,7 +70,7 @@ O executável estará em `dist/RiverCleanup/`
 ### Distribuição
 
 Para distribuir o jogo:
-1. Comprima toda a pasta `dist/RiverCleanup/`
+1. Comprima toda a pasta `dist/Crocolixo/`
 2. Distribua o arquivo ZIP
 3. ⚠️ O usuário deve extrair TUDO antes de executar
 

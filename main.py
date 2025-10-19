@@ -1,5 +1,5 @@
 """
-Game Jam 2025 - River Cleanup Game
+Game Jam 2025 - Crocolixo
 Main entry point
 """
 import pygame
@@ -13,7 +13,7 @@ from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, GAME_TITLE
 def main():
     """Initialize and run the game"""
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='River Cleanup Game')
+    parser = argparse.ArgumentParser(description='Crocolixo - River Cleanup Game')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     args = parser.parse_args()
 

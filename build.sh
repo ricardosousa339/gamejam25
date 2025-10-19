@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de build automatizado para River Cleanup Game
+# Script de build automatizado para Crocolixo
 # Uso: ./build.sh
 
-echo "🎮 River Cleanup - Build Script"
+echo "🐊 Crocolixo - Build Script"
 echo "================================"
 echo ""
 
@@ -34,21 +34,21 @@ rm -rf build/ dist/
 
 # Executar build
 echo "🔨 Gerando executável..."
-pyinstaller --clean RiverCleanup.spec
+pyinstaller --clean Crocolixo.spec
 
 # Verificar sucesso
-if [ -f "dist/RiverCleanup/RiverCleanup" ] || [ -f "dist/RiverCleanup/RiverCleanup.exe" ]; then
+if [ -f "dist/Crocolixo/Crocolixo" ] || [ -f "dist/Crocolixo/Crocolixo.exe" ]; then
     echo ""
     echo "✅ Build concluído com sucesso!"
-    echo "📁 Localização: dist/RiverCleanup/"
+    echo "📁 Localização: dist/Crocolixo/"
     echo ""
     echo "Para distribuir:"
-    echo "  1. Comprima a pasta dist/RiverCleanup/"
+    echo "  1. Comprima a pasta dist/Crocolixo/"
     echo "  2. Distribua o arquivo ZIP completo"
     echo ""
     
     # Mostrar tamanho
-    SIZE=$(du -sh dist/RiverCleanup/ | cut -f1)
+    SIZE=$(du -sh dist/Crocolixo/ | cut -f1)
     echo "📊 Tamanho total: $SIZE"
     
     # Criar ZIP automático (opcional)
@@ -57,9 +57,9 @@ if [ -f "dist/RiverCleanup/RiverCleanup" ] || [ -f "dist/RiverCleanup/RiverClean
     if [[ $REPLY =~ ^[Ss]$ ]]; then
         echo "📦 Criando ZIP..."
         cd dist
-        zip -r RiverCleanup.zip RiverCleanup/
+        zip -r Crocolixo.zip Crocolixo/
         cd ..
-        echo "✅ Arquivo criado: dist/RiverCleanup.zip"
+        echo "✅ Arquivo criado: dist/Crocolixo.zip"
     fi
 else
     echo "❌ Erro durante o build. Verifique os logs acima."

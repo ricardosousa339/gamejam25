@@ -1,4 +1,4 @@
-name: Build Windows Release
+name: Build Crocolixo Release
 
 on:
   push:
@@ -32,21 +32,21 @@ jobs:
     
     - name: Build with PyInstaller
       run: |
-        pyinstaller --clean RiverCleanup.spec
+        pyinstaller --clean Crocolixo.spec
     
     - name: List build contents
       run: |
-        dir dist\RiverCleanup
+        dir dist\Crocolixo
     
     - name: Create ZIP archive
       run: |
-        Compress-Archive -Path dist\RiverCleanup\* -DestinationPath RiverCleanup-Windows-${{ github.ref_name }}.zip
+        Compress-Archive -Path dist\Crocolixo\* -DestinationPath Crocolixo-Windows-${{ github.ref_name }}.zip
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: RiverCleanup-Windows
-        path: RiverCleanup-Windows-${{ github.ref_name }}.zip
+        name: Crocolixo-Windows
+        path: Crocolixo-Windows-${{ github.ref_name }}.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -68,19 +68,19 @@ jobs:
     
     - name: Build with PyInstaller
       run: |
-        pyinstaller --clean RiverCleanup.spec
+        pyinstaller --clean Crocolixo.spec
     
     - name: Create TAR archive
       run: |
         cd dist
-        tar -czf RiverCleanup-Linux-${{ github.ref_name }}.tar.gz RiverCleanup/
-        mv RiverCleanup-Linux-${{ github.ref_name }}.tar.gz ..
+        tar -czf Crocolixo-Linux-${{ github.ref_name }}.tar.gz Crocolixo/
+        mv Crocolixo-Linux-${{ github.ref_name }}.tar.gz ..
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: RiverCleanup-Linux
-        path: RiverCleanup-Linux-${{ github.ref_name }}.tar.gz
+        name: Crocolixo-Linux
+        path: Crocolixo-Linux-${{ github.ref_name }}.tar.gz
 
   create-release:
     name: Create GitHub Release
@@ -92,19 +92,19 @@ jobs:
     - name: Download Windows artifact
       uses: actions/download-artifact@v4
       with:
-        name: RiverCleanup-Windows
+        name: Crocolixo-Windows
     
     - name: Download Linux artifact
       uses: actions/download-artifact@v4
       with:
-        name: RiverCleanup-Linux
+        name: Crocolixo-Linux
     
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          RiverCleanup-Windows-${{ github.ref_name }}.zip
-          RiverCleanup-Linux-${{ github.ref_name }}.tar.gz
+          Crocolixo-Windows-${{ github.ref_name }}.zip
+          Crocolixo-Linux-${{ github.ref_name }}.tar.gz
         draft: false
         prerelease: false
         generate_release_notes: true
