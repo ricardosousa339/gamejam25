@@ -38,28 +38,39 @@ def main():
     menu_manager = MenuManager(screen)
     running = True
 
-    # Menu loop
-    while running and not menu_manager.should_start_game():
-        clock.tick(FPS)
-        
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+    # Main game loop
+    while running:
+        # Menu loop
+        menu_manager.reset_flags()
+        while running and not menu_manager.should_start_game() and not menu_manager.should_restart_game():
+            clock.tick(FPS)
+            
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
                     running = False
-        
-        menu_manager.handle_events(events)
-        menu_manager.update()
-        menu_manager.draw()
-        
-        pygame.display.flip()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+            
+            menu_manager.handle_events(events)
+            menu_manager.update()
+            menu_manager.draw()
+            
+            pygame.display.flip()
 
-    # Start game if player chose to play
-    if running and menu_manager.should_start_game():
-        game = Game(debug=args.debug)
-        game.run()
+        # Start game if player chose to play
+        if running and (menu_manager.should_start_game() or menu_manager.should_restart_game()):
+            game = Game(debug=args.debug)
+            game.run()
+            
+            # Check if game ended due to losing all lives
+            if game.game_over:
+                # Show game over screen with final score
+                menu_manager.set_game_over(game.score)
+            else:
+                # Player quit the game (ESC), go back to main menu
+                menu_manager.set_state("start")
 
     pygame.quit()
     sys.exit()

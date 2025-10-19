@@ -27,6 +27,7 @@ class Game:
         pygame.display.set_caption(GAME_TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
+        self.game_over = False  # Flag to track if game ended due to losing lives
 
         # Game state
         self.score = 0
@@ -154,6 +155,7 @@ class Game:
                     if not self.pegador_counter.lose_life():
                         # Game over - no lives left
                         self.running = False
+                        self.game_over = True
                         print("[GAME] Game Over - No lives remaining!")
 
                     break  # Only one crocodile can catch at a time

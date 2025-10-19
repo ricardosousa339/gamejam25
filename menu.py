@@ -271,6 +271,90 @@ class StoryScreen(MenuState):
             self.screen.blit(hint, hint_rect)
 
 
+class GameOverScreen(MenuState):
+    """Game Over screen with restart option"""
+    def __init__(self, screen):
+        super().__init__(screen)
+        
+        # Load font
+        try:
+            self.title_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 64)
+            self.menu_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 32)
+            self.hint_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 24)
+        except:
+            print("Warning: Could not load upheaval.ttf, using default font")
+            self.title_font = pygame.font.Font(None, 64)
+            self.menu_font = pygame.font.Font(None, 32)
+            self.hint_font = pygame.font.Font(None, 24)
+        
+        # Menu options
+        self.selected_option = 0
+        self.options = ["JOGAR NOVAMENTE", "MENU PRINCIPAL"]
+        
+        # Animation
+        self.blink_timer = 0
+        self.show_title = True
+        self.final_score = 0
+    
+    def set_score(self, score):
+        """Set the final score to display"""
+        self.final_score = score
+    
+    def handle_events(self, events):
+        """Handle input events"""
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if self.selected_option == 0:
+                        self.next_state = "restart"
+                    elif self.selected_option == 1:
+                        self.next_state = "start"
+                elif event.key == pygame.K_UP:
+                    self.selected_option = (self.selected_option - 1) % len(self.options)
+                elif event.key == pygame.K_DOWN:
+                    self.selected_option = (self.selected_option + 1) % len(self.options)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Click to restart
+                self.next_state = "restart"
+    
+    def update(self):
+        """Update animations"""
+        self.blink_timer += 1
+        if self.blink_timer >= 20:  # Blink every 20 frames
+            self.blink_timer = 0
+            self.show_title = not self.show_title
+    
+    def draw(self):
+        """Draw game over screen"""
+        # Dark red background
+        self.screen.fill((80, 20, 20))
+        
+        # Game Over title (blinking)
+        if self.show_title:
+            title = self.title_font.render("GAME OVER", True, RED)
+            title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, 100))
+            self.screen.blit(title, title_rect)
+        
+        # Score
+        score_text = self.hint_font.render(f"Pontuacao Final: {self.final_score}", True, YELLOW)
+        score_rect = score_text.get_rect(center=(SCREEN_WIDTH // 2, 200))
+        self.screen.blit(score_text, score_rect)
+        
+        # Menu options
+        menu_y_start = 300
+        for i, option in enumerate(self.options):
+            color = YELLOW if i == self.selected_option else WHITE
+            text = self.menu_font.render(option, True, color)
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, menu_y_start + i * 60))
+            self.screen.blit(text, text_rect)
+        
+        # Hint at the bottom
+        hint_text = "Use setas para navegar - ENTER para selecionar"
+        hint = self.hint_font.render(hint_text, True, WHITE)
+        hint_rect = hint.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 50))
+        self.screen.blit(hint, hint_rect)
+
+
 class MenuManager:
     """Manages menu states and transitions"""
     def __init__(self, screen):
@@ -280,9 +364,11 @@ class MenuManager:
             "start": StartScreen(screen),
             "credits": CreditsScreen(screen),
             "story": StoryScreen(screen),
+            "gameover": GameOverScreen(screen),
         }
         self.set_state("start")
         self.start_game = False
+        self.restart_game = False
     
     def set_state(self, state_name):
         """Change to a different menu state"""
@@ -291,6 +377,13 @@ class MenuManager:
             self.current_state.next_state = None
         elif state_name == "game":
             self.start_game = True
+        elif state_name == "restart":
+            self.restart_game = True
+    
+    def set_game_over(self, score):
+        """Show game over screen with final score"""
+        self.states["gameover"].set_score(score)
+        self.set_state("gameover")
     
     def handle_events(self, events):
         """Handle input events"""
@@ -311,3 +404,12 @@ class MenuManager:
     def should_start_game(self):
         """Check if player wants to start the game"""
         return self.start_game
+    
+    def should_restart_game(self):
+        """Check if player wants to restart the game"""
+        return self.restart_game
+    
+    def reset_flags(self):
+        """Reset start and restart flags"""
+        self.start_game = False
+        self.restart_game = False
