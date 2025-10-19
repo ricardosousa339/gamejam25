@@ -59,7 +59,7 @@ class StartScreen(MenuState):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     if self.selected_option == 0:
-                        self.next_state = "game"
+                        self.next_state = "story"  # Go to story/instructions first
                     elif self.selected_option == 1:
                         self.next_state = "credits"
                 elif event.key == pygame.K_UP:
@@ -67,8 +67,8 @@ class StartScreen(MenuState):
                 elif event.key == pygame.K_DOWN:
                     self.selected_option = (self.selected_option + 1) % len(self.options)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Allow clicking to start game
-                self.next_state = "game"
+                # Allow clicking to go to story
+                self.next_state = "story"
     
     def update(self):
         """Update animations"""
@@ -161,6 +161,116 @@ class CreditsScreen(MenuState):
         self.screen.blit(hint, hint_rect)
 
 
+class StoryScreen(MenuState):
+    """Story and instructions screen"""
+    def __init__(self, screen):
+        super().__init__(screen)
+        
+        # Load font
+        try:
+            self.title_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 40)
+            self.text_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 16)
+            self.hint_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 20)
+        except:
+            print("Warning: Could not load upheaval.ttf, using default font")
+            self.title_font = pygame.font.Font(None, 40)
+            self.text_font = pygame.font.Font(None, 16)
+            self.hint_font = pygame.font.Font(None, 20)
+        
+        # Story and instructions
+        self.story_lines = [
+            "O rio está poluido e precisa da sua ajuda!",
+            "",
+            "Use seu pegador de piscina para limpar o rio,",
+            "mas cuidado com os crocodilos famintos!",
+        ]
+        
+        self.instructions = [
+            "CONTROLES:",
+            "",
+            "Setas <- -> : Mover o pegador",
+            "ESPACO (segurar): Carregar forca",
+            "ESPACO (soltar): Mergulhar e coletar",
+            "",
+            "Colete o lixo flutuante",
+            "Evite os crocodilos!",
+            "Voce tem 3 vidas - use com sabedoria",
+        ]
+        
+        # Animation
+        self.blink_timer = 0
+        self.show_hint = True
+    
+    def handle_events(self, events):
+        """Handle input events"""
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    self.next_state = "game"
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.next_state = "game"
+    
+    def update(self):
+        """Update animations"""
+        self.blink_timer += 1
+        if self.blink_timer >= 30:
+            self.blink_timer = 0
+            self.show_hint = not self.show_hint
+    
+    def draw(self):
+        """Draw story and instructions"""
+        # Gradient background (river themed)
+        for y in range(SCREEN_HEIGHT):
+            color_factor = y / SCREEN_HEIGHT
+            r = int(30 + (60 - 30) * color_factor)
+            g = int(120 + (160 - 120) * color_factor)
+            b = int(180 + (220 - 180) * color_factor)
+            pygame.draw.line(self.screen, (r, g, b), (0, y), (SCREEN_WIDTH, y))
+        
+        # Title
+        title = self.title_font.render("CROCOLIXO", True, YELLOW)
+        title_rect = title.get_rect(center=(SCREEN_WIDTH // 2, 40))
+        self.screen.blit(title, title_rect)
+        
+        # Story section
+        y_offset = 100
+        for line in self.story_lines:
+            if line == "":
+                y_offset += 15
+                continue
+            text = self.text_font.render(line, True, WHITE)
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += 25
+        
+        # Separator
+        y_offset += 20
+        pygame.draw.line(self.screen, YELLOW, 
+                        (SCREEN_WIDTH // 4, y_offset), 
+                        (3 * SCREEN_WIDTH // 4, y_offset), 3)
+        y_offset += 30
+        
+        # Instructions section
+        for line in self.instructions:
+            if line == "":
+                y_offset += 15
+                continue
+            
+            # Highlight the CONTROLES title
+            color = YELLOW if "CONTROLES" in line else WHITE
+            text = self.text_font.render(line, True, color)
+            text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += 25
+        
+        # Hint to continue
+        if self.show_hint:
+            hint_text = "Pressione ENTER ou ESPACO para comecar!"
+            hint = self.hint_font.render(hint_text, True, YELLOW)
+            hint_rect = hint.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40))
+            self.screen.blit(hint, hint_rect)
+
+
 class MenuManager:
     """Manages menu states and transitions"""
     def __init__(self, screen):
@@ -169,6 +279,7 @@ class MenuManager:
         self.states = {
             "start": StartScreen(screen),
             "credits": CreditsScreen(screen),
+            "story": StoryScreen(screen),
         }
         self.set_state("start")
         self.start_game = False
