@@ -25,6 +25,10 @@ GRAVITY = 0.5
 RIVER_FLOW_SPEED = -2
 OBJECT_SPAWN_RATE = 2000  # milliseconds
 
+# River bounds in source image coordinates (pixels in margens.png)
+RIVER_IMAGE_BAND_TOP = 100
+RIVER_IMAGE_BAND_BOTTOM = 225
+
 # Object types and colors
 OBJECT_TYPES = {
     "plastic": RED,

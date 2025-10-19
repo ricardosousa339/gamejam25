@@ -23,11 +23,20 @@ class Game:
         margens_original = pygame.image.load('assets/margens.png').convert_alpha()
         
         # Scale images to screen height while maintaining aspect ratio for tiling
-        scale_factor = SCREEN_HEIGHT / rio_original.get_height()
-        new_width = int(rio_original.get_width() * scale_factor)
+        self.scale_factor = SCREEN_HEIGHT / rio_original.get_height()
+        new_width = int(rio_original.get_width() * self.scale_factor)
         
         self.rio_img = pygame.transform.scale(rio_original, (new_width, SCREEN_HEIGHT))
         self.margens_img = pygame.transform.scale(margens_original, (new_width, SCREEN_HEIGHT))
+        
+        # Vertical band where objects should spawn (converted from image space)
+        self.river_band_top = int(RIVER_IMAGE_BAND_TOP * self.scale_factor)
+        self.river_band_bottom = int(RIVER_IMAGE_BAND_BOTTOM * self.scale_factor)
+        self.river_band_top = max(0, min(self.river_band_top, SCREEN_HEIGHT))
+        self.river_band_bottom = max(
+            self.river_band_top + FloatingObject.HEIGHT,
+            min(self.river_band_bottom, SCREEN_HEIGHT)
+        )
         
         # River animation
         self.rio_x_offset = 0
@@ -45,12 +54,11 @@ class Game:
     
     def _setup_game(self):
         """Set up initial game objects"""
-        # Create some initial floating objects
-        for i in range(3):
-            y = random.randint(100, 225)  # Spawn only between pixels 100-225
+        for _ in range(3):
+            y = self._random_river_y()
             x = random.randint(0, SCREEN_WIDTH)
             obj_type = random.choice(list(OBJECT_TYPES.keys()))
-            floating_obj = FloatingObject(x, y, obj_type)
+            floating_obj = FloatingObject(x, y, self.river_band_top, self.river_band_bottom, obj_type)
             self.floating_objects.add(floating_obj)
             self.all_sprites.add(floating_obj)
     
@@ -90,24 +98,26 @@ class Game:
         self.all_sprites.update()
         
         # Remove objects that went off screen (handle both directions)
-        for obj in self.floating_objects:
-            if RIVER_FLOW_SPEED > 0 and obj.rect.left > SCREEN_WIDTH:
+        for obj in list(self.floating_objects):
+            if RIVER_FLOW_SPEED > 0 and obj.rect.right < 0:
                 obj.kill()
-            elif RIVER_FLOW_SPEED < 0 and obj.rect.right < 0:
+            elif RIVER_FLOW_SPEED < 0 and obj.rect.left > SCREEN_WIDTH:
                 obj.kill()
         
         # Spawn new objects periodically
         current_time = pygame.time.get_ticks()
         if current_time - self.last_spawn > OBJECT_SPAWN_RATE:
             self.last_spawn = current_time
-            y = random.randint(100, 225)  # Spawn only between pixels 100-225
+            y = self._random_river_y()
             obj_type = random.choice(list(OBJECT_TYPES.keys()))
             
-            # Spawn from left if moving right, from right if moving left
+            # Spawn on the side opposite to the flow so objects enter the screen
             if RIVER_FLOW_SPEED > 0:
-                floating_obj = FloatingObject(-50, y, obj_type)
+                spawn_x = SCREEN_WIDTH + FloatingObject.WIDTH
+                floating_obj = FloatingObject(spawn_x, y, self.river_band_top, self.river_band_bottom, obj_type)
             else:
-                floating_obj = FloatingObject(SCREEN_WIDTH + 50, y, obj_type)
+                spawn_x = -FloatingObject.WIDTH
+                floating_obj = FloatingObject(spawn_x, y, self.river_band_top, self.river_band_bottom, obj_type)
             
             self.floating_objects.add(floating_obj)
             self.all_sprites.add(floating_obj)
@@ -144,3 +154,9 @@ class Game:
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
+
+    def _random_river_y(self):
+        """Return a random y within the scaled river band"""
+        spawn_min_y = self.river_band_top
+        spawn_max_y = max(spawn_min_y, self.river_band_bottom - FloatingObject.HEIGHT)
+        return random.randint(spawn_min_y, spawn_max_y)

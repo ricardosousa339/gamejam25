@@ -7,7 +7,10 @@ from config import *
 
 
 class FloatingObject(pygame.sprite.Sprite):
-    def __init__(self, x, y, object_type="plastic"):
+    WIDTH = 40
+    HEIGHT = 40
+
+    def __init__(self, x, y, min_y, max_y, object_type="plastic"):
         """
         Initialize a floating object
         
@@ -21,8 +24,8 @@ class FloatingObject(pygame.sprite.Sprite):
         self.object_type = object_type
         
         # Create a simple rectangle sprite (replace with images later)
-        self.width = 40
-        self.height = 40
+        self.width = self.WIDTH
+        self.height = self.HEIGHT
         self.image = pygame.Surface((self.width, self.height))
         self.color = OBJECT_TYPES.get(object_type, WHITE)
         self.image.fill(self.color)
@@ -33,21 +36,19 @@ class FloatingObject(pygame.sprite.Sprite):
         
         # Movement properties - synchronized with river flow
         self.vel_y = random.uniform(-0.5, 0.5)  # Slight vertical wobble
+        self.min_y = min_y
+        self.max_y = max_y
     
     def update(self):
         """Update the floating object position"""
         # Float with the river - stay in sync with the water texture
-        # The river background moves by: x_pos = position - offset
-        # As offset increases, background shifts left (water appears to flow right)
-        # Objects floating ON the water should move with the WATER, not the camera
-        # So they should move in the OPPOSITE direction of the offset change
-        self.rect.x -= RIVER_FLOW_SPEED  # Inverted to match water flow
+        self.rect.x -= RIVER_FLOW_SPEED
         self.rect.y += self.vel_y
         
-        # Keep within vertical bounds with bounce (between pixels 100-225)
-        if self.rect.top < 100:
-            self.rect.top = 100
+        # Keep within vertical bounds with bounce
+        if self.rect.top < self.min_y:
+            self.rect.top = self.min_y
             self.vel_y *= -1
-        elif self.rect.bottom > SCREEN_HEIGHT - 50:
-            self.rect.bottom = SCREEN_HEIGHT - 50
+        elif self.rect.bottom > self.max_y:
+            self.rect.bottom = self.max_y
             self.vel_y *= -1
