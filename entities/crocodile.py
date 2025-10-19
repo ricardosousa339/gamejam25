@@ -42,6 +42,9 @@ class Crocodile(pygame.sprite.Sprite):
         self.max_y = max_y
         self.vel_y = random.uniform(-0.3, 0.3)  # Slight vertical wobble
 
+        # Swim direction (0 = left, 1 = right)
+        self.swim_direction = random.randint(0, 1)
+
         # Load all animations
         self._load_animations()
 
@@ -132,6 +135,10 @@ class Crocodile(pygame.sprite.Sprite):
         """Update the current image based on state and animation frame"""
         current_animation = self.animations[self.control.current_state]
         self.image = current_animation[self.current_anim_index]
+
+        # Flip image horizontally if swimming left (swim_direction = 0)
+        if self.swim_direction == 0:
+            self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self):
         """Update crocodile position and animation"""

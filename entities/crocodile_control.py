@@ -17,6 +17,10 @@ class CrocodileControl:
     STATE_CHANGE_MIN_TIME = 2000  # minimum time before changing state
     STATE_CHANGE_MAX_TIME = 5000  # maximum time before changing state
 
+    # Vertical movement timing (milliseconds)
+    VERTICAL_MOVE_MIN_TIME = 1500  # minimum time before changing vertical direction
+    VERTICAL_MOVE_MAX_TIME = 3000  # maximum time before changing vertical direction (3 seconds)
+
     # Swim direction states
     TO_RIGH = 1
     TO_LEFT = 0
@@ -34,26 +38,22 @@ class CrocodileControl:
         """Initialize the control"""
         self.current_state = random.randint(1, 4)  # Start at random state (0-4)
         self.target_state = self.current_state
-        self.swim_direction = random.randint(0, 1)
 
         # State transition timing
         self.state_timer = pygame.time.get_ticks()
-        self.swim_dir_timer = self.state_timer
         self.swim_vert_timer = self.state_timer
         self.next_state_change = random.randint(
             self.STATE_CHANGE_MIN_TIME,
             self.STATE_CHANGE_MAX_TIME
         )
 
-        self.next_swim_dir_change = random.randint(
-            self.STATE_CHANGE_MIN_TIME,
-            self.STATE_CHANGE_MAX_TIME
+        self.next_swim_vert_change = random.randint(
+            self.VERTICAL_MOVE_MIN_TIME,
+            self.VERTICAL_MOVE_MAX_TIME
         )
 
-        self.next_swim_vert_change = random.randint(
-            self.STATE_CHANGE_MIN_TIME,
-            self.STATE_CHANGE_MAX_TIME
-        )
+        # Vertical movement velocity
+        self.vel_y = random.uniform(-1.5, 1.5)
 
     def update_movement(self, crocodile, min_y, max_y):
         current_time = pygame.time.get_ticks()
@@ -67,41 +67,42 @@ class CrocodileControl:
             max_y: Maximum y boundary
         """
         # random swim
-        if(self.swim_direction):
+        if(crocodile.swim_direction):
             crocodile.rect.x += 2
             if(crocodile.rect.x > config.SCREEN_WIDTH + 20):
-                self.swim_direction = 0
+                crocodile.swim_direction = 0
         else:
             crocodile.rect.x -= 2
-            if(crocodile.rect.x < -20):
-                self.swim_direction = 1
+            if(crocodile.rect.x < -100):
+                crocodile.swim_direction = 1
 
+        # Check if it's time to change vertical direction
         if current_time - self.swim_vert_timer > self.next_swim_vert_change:
-            old_swim_vert_dir = self.swim_direction
+            old_vel_y = self.vel_y
 
-            # Pick a random target state (0-4, including FULLY_SUBMERGED)
-            self.vel_y = random.uniform(-2, 2)
+            # Pick a new random vertical velocity
+            self.vel_y = random.uniform(-1.5, 1.5)
 
-            print(f"[CROC] New Swim Direction (vertical): {old_swim_vert_dir} -> {self.swim_direction}")
+            print(f"[CROC] New vertical velocity: {old_vel_y:.2f} -> {self.vel_y:.2f}")
 
             # Reset timer for next change
             self.swim_vert_timer = current_time
             self.next_swim_vert_change = random.randint(
-                self.STATE_CHANGE_MIN_TIME,
-                self.STATE_CHANGE_MAX_TIME
+                self.VERTICAL_MOVE_MIN_TIME,
+                self.VERTICAL_MOVE_MAX_TIME
             )
 
-        # small wobble
-        self.vel_y = random.uniform(-0.4, 0.4)
-        crocodile.rect.y += crocodile.vel_y
+        # Apply vertical movement with small wobble
+        wobble = random.uniform(-0.2, 0.2)
+        crocodile.rect.y += self.vel_y + wobble
 
         # Keep within vertical bounds with bounce
         if crocodile.rect.top < min_y:
             crocodile.rect.top = min_y
-            crocodile.vel_y *= -1
+            self.vel_y = abs(self.vel_y)  # Force downward movement
         elif crocodile.rect.bottom > max_y:
             crocodile.rect.bottom = max_y
-            crocodile.vel_y *= -1
+            self.vel_y = -abs(self.vel_y)  # Force upward movement
 
     def update_state(self):
         """
@@ -139,22 +140,6 @@ class CrocodileControl:
             old_state = self.current_state
             self.current_state -= 1
             print(f"[CROC] Surfacing: {old_state} -> {self.current_state} (target: {self.target_state})")
-
-        # Check if it's time to pick a new swimmin direction state
-        if current_time - self.swim_dir_timer > self.next_swim_dir_change:
-            old_swim_dir = self.swim_direction
-
-            # Pick a random target state (0-4, including FULLY_SUBMERGED)
-            self.swim_direction = random.randint(0, 1)
-
-            print(f"[CROC] New Swim Direction: {old_swim_dir} -> {self.swim_direction}")
-
-            # Reset timer for next change
-            self.swim_dir_timer = current_time
-            self.next_swim_dir_change = random.randint(
-                self.STATE_CHANGE_MIN_TIME,
-                self.STATE_CHANGE_MAX_TIME
-            )
 
         return self.current_state
     
