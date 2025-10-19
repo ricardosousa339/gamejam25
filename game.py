@@ -67,9 +67,7 @@ class Game:
         self.all_sprites.add(self.pegador)
 
         # Create pegador counter (lives/HP system)
-        counter_x = 20  # Left margin
-        counter_y = SCREEN_HEIGHT - 83  # Bottom left corner (closer to bottom)
-        self.pegador_counter = PegadorCounter(counter_x, counter_y, max_lives=3)
+        self.pegador_counter = PegadorCounter(max_lives=3)
 
         # Spawn timer
         self.last_spawn = pygame.time.get_ticks()

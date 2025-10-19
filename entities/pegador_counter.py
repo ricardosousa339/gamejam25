@@ -12,7 +12,7 @@ class PegadorCounter:
     Displays 3 small pegador sprites at the top of the screen.
     """
 
-    def __init__(self, x, y, max_lives=3):
+    def __init__(self, max_lives=3):
         """
         Initialize the pegador counter
 
@@ -21,23 +21,23 @@ class PegadorCounter:
             y (int): Y position of the pegador icons
             max_lives (int): Maximum number of lives (default 3)
         """
-        self.x = x
-        self.y = y
+        self.x = 8
+        self.y = SCREEN_HEIGHT - 75
         self.max_lives = max_lives
         self.current_lives = max_lives
 
         # Load and scale pegador sprite
-        pegador_image = pygame.image.load(resource_path('assets/pegador_frente_comprido.png')).convert_alpha()
+        pegador_image = pygame.image.load(resource_path('assets/pegador_frente.png')).convert_alpha()
 
         # Scale to small icon size
-        icon_scale = 0.25  # Increased size for better visibility
+        icon_scale = 0.4  # Increased size for better visibility
         icon_width = int(pegador_image.get_width() * icon_scale)
         icon_height = int(pegador_image.get_height() * icon_scale)
 
         self.pegador_icon = pygame.transform.smoothscale(pegador_image, (icon_width, icon_height))
 
         # Spacing between icons
-        self.icon_spacing = icon_width + 15
+        self.icon_spacing = icon_width + 6
 
     def lose_life(self):
         """
