@@ -4,6 +4,7 @@ Floating objects that move down the river
 import pygame
 import random
 from config import *
+from utils import resource_path
 
 
 class FloatingObject(pygame.sprite.Sprite):
@@ -27,7 +28,7 @@ class FloatingObject(pygame.sprite.Sprite):
         # Create a simple rectangle sprite (replace with images later)
         self.width = self.WIDTH
         self.height = self.HEIGHT
-        self.image = pygame.image.load(self.object.image)
+        self.image = pygame.image.load(resource_path(self.object.image))
         # self.color = OBJECT_TYPES.get(object_type, WHITE)
         # self.image.fill(self.color)
         self.rotation = random.randint(0, 359)

@@ -35,6 +35,34 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## 📦 Build e Distribuição
+
+### Gerar Executável
+
+Para criar um executável distribuível:
+
+```bash
+# Usando o script automático
+./build.sh
+
+# Ou manualmente
+pyinstaller --clean RiverCleanup.spec
+```
+
+O executável estará em `dist/RiverCleanup/`
+
+### Documentação Completa
+
+- **[BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md)** - Instruções gerais de build
+- **[BUILD_WINDOWS.md](BUILD_WINDOWS.md)** - Como gerar .exe para Windows
+
+### Distribuição
+
+Para distribuir o jogo:
+1. Comprima toda a pasta `dist/RiverCleanup/`
+2. Distribua o arquivo ZIP
+3. ⚠️ O usuário deve extrair TUDO antes de executar
+
 ## Controles
 
 - **Mouse Click**: Clique em um objeto flutuante para selecioná-lo

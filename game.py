@@ -5,6 +5,7 @@ import pygame
 import random
 from config import *
 from entities.floating_object import FloatingObject
+from utils import resource_path
 
 
 class Game:
@@ -19,8 +20,8 @@ class Game:
         self.score = 0
         
         # Load and scale background images to fill the screen
-        rio_original = pygame.image.load('assets/rio.png').convert_alpha()
-        margens_original = pygame.image.load('assets/margens.png').convert_alpha()
+        rio_original = pygame.image.load(resource_path('assets/rio.png')).convert_alpha()
+        margens_original = pygame.image.load(resource_path('assets/margens.png')).convert_alpha()
         
         # Scale images to screen height while maintaining aspect ratio for tiling
         self.scale_factor = SCREEN_HEIGHT / rio_original.get_height()
@@ -153,7 +154,7 @@ class Game:
         """Draw UI elements like score"""
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {self.score}", True, WHITE)
-        self.screen.blit(score_text, (10, 10))
+        #self.screen.blit(score_text, (10, 10))
 
     def _random_river_y(self):
         """Return a random y within the scaled river band"""
