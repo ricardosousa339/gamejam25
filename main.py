@@ -6,6 +6,8 @@ import pygame
 import sys
 import argparse
 from game import Game
+from menu import MenuManager
+from config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, GAME_TITLE
 
 
 def main():
@@ -27,9 +29,37 @@ def main():
         # Game will run normally without sound
         pass
 
-    # Create game with debug flag
-    game = Game(debug=args.debug)
-    game.run()
+    # Create screen and clock
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption(GAME_TITLE)
+    clock = pygame.time.Clock()
+
+    # Start with menu
+    menu_manager = MenuManager(screen)
+    running = True
+
+    # Menu loop
+    while running and not menu_manager.should_start_game():
+        clock.tick(FPS)
+        
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+        
+        menu_manager.handle_events(events)
+        menu_manager.update()
+        menu_manager.draw()
+        
+        pygame.display.flip()
+
+    # Start game if player chose to play
+    if running and menu_manager.should_start_game():
+        game = Game(debug=args.debug)
+        game.run()
 
     pygame.quit()
     sys.exit()
