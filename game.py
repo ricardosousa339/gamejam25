@@ -5,17 +5,25 @@ import pygame
 import random
 from config import *
 from entities.floating_object import FloatingObject
+from entities.crocodile import Crocodile
+from entities.crocodile_control import DebugControl
 from utils import resource_path
 
 
 class Game:
-    def __init__(self):
-        """Initialize the game"""
+    def __init__(self, debug=False):
+        """
+        Initialize the game
+
+        Args:
+            debug (bool): Enable debug mode with fixed test crocodile
+        """
+        self.debug = debug
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(GAME_TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
-        
+
         # Game state
         self.score = 0
         
@@ -46,7 +54,8 @@ class Game:
         # Sprite groups
         self.all_sprites = pygame.sprite.Group()
         self.floating_objects = pygame.sprite.Group()
-        
+        self.crocodiles = pygame.sprite.Group()
+
         # Spawn timer
         self.last_spawn = pygame.time.get_ticks()
         
@@ -62,6 +71,13 @@ class Game:
             floating_obj = FloatingObject(x, y, self.river_band_top, self.river_band_bottom, obj_type)
             self.floating_objects.add(floating_obj)
             self.all_sprites.add(floating_obj)
+
+        # Spawn initial crocodile
+        self.spawn_crocodile()
+
+        # Setup debug mode if enabled
+        if self.debug:
+            self._setup_debug()
     
     def run(self):
         """Main game loop"""
@@ -104,7 +120,14 @@ class Game:
                 obj.kill()
             elif RIVER_FLOW_SPEED < 0 and obj.rect.left > SCREEN_WIDTH:
                 obj.kill()
-        
+
+        # Remove crocodiles that went off screen
+        for croc in list(self.crocodiles):
+            if RIVER_FLOW_SPEED > 0 and croc.rect.right < 0:
+                croc.kill()
+            elif RIVER_FLOW_SPEED < 0 and croc.rect.left > SCREEN_WIDTH:
+                croc.kill()
+
         # Spawn new objects periodically
         current_time = pygame.time.get_ticks()
         if current_time - self.last_spawn > OBJECT_SPAWN_RATE:
@@ -142,8 +165,12 @@ class Game:
             x_pos = i * self.rio_width
             self.screen.blit(self.margens_img, (x_pos, 0))
         
-        # Draw all sprites
-        self.all_sprites.draw(self.screen)
+        # Draw all sprites (except fully submerged crocodiles)
+        for sprite in self.all_sprites:
+            # Skip drawing crocodiles that are fully submerged
+            if hasattr(sprite, 'control') and sprite.control.current_state == 4:
+                continue
+            self.screen.blit(sprite.image, sprite.rect)
         
         # Draw UI
         self._draw_ui()
@@ -161,3 +188,35 @@ class Game:
         spawn_min_y = self.river_band_top
         spawn_max_y = max(spawn_min_y, self.river_band_bottom - FloatingObject.HEIGHT)
         return random.randint(spawn_min_y, spawn_max_y)
+
+    def spawn_crocodile(self):
+        """Spawn a crocodile in the river"""
+        y = self._random_river_y()
+
+        # Spawn on the right side of the screen (will move left with river flow)
+        # RIVER_FLOW_SPEED is negative, so crocodile enters from right
+        spawn_x = SCREEN_WIDTH + 100
+
+        crocodile = Crocodile(spawn_x, y, self.river_band_top, self.river_band_bottom)
+        self.crocodiles.add(crocodile)
+        self.all_sprites.add(crocodile)
+
+    def _setup_debug(self):
+        """Setup debug mode with fixed test crocodile"""
+        # Add a fixed crocodile for testing with DebugControl
+        # Position: left side (x=150), middle of river (y = center of river band)
+        debug_x = 150
+        debug_y = (self.river_band_top + self.river_band_bottom) // 2
+        debug_control = DebugControl(fixed_x=debug_x, fixed_y=debug_y)
+        debug_croc = Crocodile(debug_x, debug_y, self.river_band_top, self.river_band_bottom, control=debug_control)
+        self.crocodiles.add(debug_croc)
+        self.all_sprites.add(debug_croc)
+        self.debug_crocodile = debug_croc
+
+        print("=" * 50)
+        print("[DEBUG MODE ENABLED]")
+        print(f"Debug crocodile at ({debug_x}, {debug_y}) with DebugControl")
+        print(f"River band: {self.river_band_top} to {self.river_band_bottom}")
+        print(f"Initial state: {debug_croc.control.current_state}")
+        print("States cycle: 0->1->2->3->4->0 (4=invisible)")
+        print("=" * 50)
