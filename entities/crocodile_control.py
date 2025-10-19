@@ -63,12 +63,24 @@ class CrocodileControl:
         self.wait_start_time = 0
         self.wait_duration = 1000  # 1 second wait
 
-    def start_carrying(self):
-        """Start carrying a pegador"""
-        self.is_carrying = True
-        self.carrying_start_time = pygame.time.get_ticks()
-        self.waiting_at_edge = False
-        print("[CONTROL] Started carrying mode")
+        # Capture animation state
+        self.is_capturing = False
+        self.capture_start_time = 0
+        self.capture_base_y = 0  # Store original Y position during capture
+        self.pre_capture_state = None  # Store state before capture to restore later
+
+    def start_carrying(self, crocodile):
+        """Start carrying a pegador - begins with capture animation"""
+        self.is_capturing = True
+        self.capture_start_time = pygame.time.get_ticks()
+        self.capture_base_y = crocodile.rect.y
+        self.pre_capture_state = self.current_state
+
+        # Force crocodile to fully surface during capture
+        self.current_state = self.FULLY_SURFACED
+        self.target_state = self.FULLY_SURFACED
+
+        print(f"[CONTROL] Started capture animation at y={self.capture_base_y}, state={self.pre_capture_state}")
 
     def stop_carrying(self):
         """Stop carrying and return to normal behavior"""
@@ -87,6 +99,35 @@ class CrocodileControl:
             min_y: Minimum y boundary
             max_y: Maximum y boundary
         """
+        # Capture animation - emerge and wobble
+        if self.is_capturing:
+            elapsed_time = current_time - self.capture_start_time
+
+            if elapsed_time < config.CROCODILE_CAPTURE_DURATION:
+                # Apply strong wobble effect (shake)
+                import math
+                wobble_frequency = 0.03  # Higher frequency = faster shake
+                wobble_x = math.sin(elapsed_time * wobble_frequency) * config.CROCODILE_CAPTURE_WOBBLE_INTENSITY
+                wobble_y = math.cos(elapsed_time * wobble_frequency * 1.3) * config.CROCODILE_CAPTURE_WOBBLE_INTENSITY
+
+                # Keep crocodile near surface with wobble
+                crocodile.rect.x += wobble_x
+                crocodile.rect.y = self.capture_base_y + wobble_y
+
+                return  # Skip normal movement
+            else:
+                # Capture animation complete, transition to carrying mode
+                print("[CONTROL] Capture animation complete, starting carrying mode")
+                self.is_capturing = False
+                self.is_carrying = True
+                self.carrying_start_time = current_time
+                self.waiting_at_edge = False
+
+                # Return to state 1 (MOSTLY_SURFACED) after capture animation
+                self.current_state = self.MOSTLY_SURFACED
+                self.target_state = self.MOSTLY_SURFACED
+                print("[CONTROL] Returned to state 1 (MOSTLY_SURFACED) after capture")
+
         # Special behavior when carrying pegador
         if self.is_carrying:
             if self.waiting_at_edge:
@@ -178,6 +219,11 @@ class CrocodileControl:
             # Pick a random target state (0-4, including FULLY_SUBMERGED)
             self.target_state = self._rand_next_state(old_target)
 
+            # Prevent going to state 4 (FULLY_SUBMERGED) when carrying pegador
+            if self.is_carrying and self.target_state == self.FULLY_SUBMERGED:
+                self.target_state = self.HEAD_ONLY  # Cap at state 3
+                print(f"[CROC] Prevented state 4 while carrying, capped at {self.target_state}")
+
             print(f"[CROC] New target state: {old_target} -> {self.target_state} (current: {self.current_state})")
 
             # Reset timer for next change
@@ -192,7 +238,14 @@ class CrocodileControl:
             # Need to submerge more (increase state number)
             old_state = self.current_state
             self.current_state += 1
-            print(f"[CROC] Submerging: {old_state} -> {self.current_state} (target: {self.target_state})")
+
+            # Extra safety: prevent entering state 4 when carrying
+            if self.is_carrying and self.current_state == self.FULLY_SUBMERGED:
+                self.current_state = self.HEAD_ONLY
+                self.target_state = self.HEAD_ONLY
+                print("[CROC] Blocked state 4 while carrying, staying at state 3")
+            else:
+                print(f"[CROC] Submerging: {old_state} -> {self.current_state} (target: {self.target_state})")
         elif self.current_state > self.target_state:
             # Need to surface more (decrease state number)
             old_state = self.current_state

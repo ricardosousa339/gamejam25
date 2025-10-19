@@ -187,7 +187,7 @@ class Crocodile(pygame.sprite.Sprite):
         """
         self.is_carrying_pegador = True
         self.carried_pegador = pegador
-        self.control.start_carrying()
+        self.control.start_carrying(self)
         print(f"[CROC] Started carrying pegador at ({self.rect.x}, {self.rect.y})")
 
     def release_pegador(self):

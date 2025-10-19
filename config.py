@@ -37,6 +37,10 @@ PEGADOR_FORCE_CHARGE_RATE = 2  # How fast the force bar charges
 PEGADOR_MARGIN_Y = SCREEN_HEIGHT - 100  # Y position when at the margin (mostly off-screen)
 PEGADOR_SCALE = 1.0  # Scale factor for pegador sprite
 
+# Crocodile capture animation settings
+CROCODILE_CAPTURE_DURATION = 600  # milliseconds - duration of capture animation (emerge + wobble)
+CROCODILE_CAPTURE_WOBBLE_INTENSITY = 3.0  # pixels - intensity of wobble/shake during capture
+
 class ObjectType():
     def __init__(self, type, image, scale):
         self.type = type
