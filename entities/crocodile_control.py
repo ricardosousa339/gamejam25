@@ -37,6 +37,7 @@ class CrocodileControl:
 
     def __init__(self, crocodile):
         """Initialize the control"""
+        self.crocodile = crocodile  # Keep reference to crocodile
         self.current_state = random.randint(1, 4)  # Start at random state (0-4)
         self.target_state = self.current_state
 
@@ -69,6 +70,9 @@ class CrocodileControl:
         self.capture_base_y = 0  # Store original Y position during capture
         self.pre_capture_state = None  # Store state before capture to restore later
 
+        # Repositioning flag (when emerging from fully submerged)
+        self.should_reposition = False
+
     def start_carrying(self, crocodile):
         """Start carrying a pegador - begins with capture animation"""
         self.is_capturing = True
@@ -99,6 +103,27 @@ class CrocodileControl:
             min_y: Minimum y boundary
             max_y: Maximum y boundary
         """
+        # Handle repositioning when emerging from fully submerged state
+        if self.should_reposition:
+            # Random horizontal position
+            crocodile.rect.x = random.randint(0, config.SCREEN_WIDTH - crocodile.rect.width)
+
+            # Random vertical position within bounds
+            crocodile.rect.y = random.randint(min_y, max_y - crocodile.rect.height)
+
+            # Random swim direction
+            crocodile.swim_direction = random.randint(0, 1)
+
+            # Random vertical velocity
+            self.vel_y = random.uniform(-1.5, 1.5)
+
+            print(f"[CROC] Repositioned to ({crocodile.rect.x}, {crocodile.rect.y}), direction: {crocodile.swim_direction}")
+
+            # Add splash at the NEW position where crocodile is emerging
+            self._add_splash('emerge')
+
+            self.should_reposition = False
+
         # Capture animation - emerge and wobble
         if self.is_capturing:
             elapsed_time = current_time - self.capture_start_time
@@ -245,11 +270,24 @@ class CrocodileControl:
                 self.target_state = self.HEAD_ONLY
                 print("[CROC] Blocked state 4 while carrying, staying at state 3")
             else:
+                # When transitioning from state 3 (HEAD_ONLY) to state 4 (FULLY_SUBMERGED), create splash
+                if old_state == self.HEAD_ONLY and self.current_state == self.FULLY_SUBMERGED:
+                    self._add_splash('submerge')
+
                 print(f"[CROC] Submerging: {old_state} -> {self.current_state} (target: {self.target_state})")
         elif self.current_state > self.target_state:
             # Need to surface more (decrease state number)
             old_state = self.current_state
             self.current_state -= 1
+
+            # When emerging from fully submerged (state 4) to state 3, randomize position and direction
+            if old_state == self.FULLY_SUBMERGED and self.current_state == self.HEAD_ONLY:
+                print("[CROC] Emerging from fully submerged - randomizing position and direction")
+
+                # Will be applied in update_movement via a flag
+                # Splash will be created AFTER repositioning in update_movement
+                self.should_reposition = True
+
             print(f"[CROC] Surfacing: {old_state} -> {self.current_state} (target: {self.target_state})")
 
         return self.current_state
@@ -257,11 +295,31 @@ class CrocodileControl:
     def _rand_next_state(self, curr_state):
         if(curr_state == 1):
             return random.randint(1, 2)
-        
+
         if(curr_state == 4):
             return random.randint(3, 4)
 
         return random.randint(curr_state - 1, curr_state + 1)
+
+    def _add_splash(self, event_type):
+        """
+        Add a splash event to the crocodile's queue
+
+        Args:
+            event_type: 'submerge' or 'emerge'
+        """
+        # Calculate splash position based on swim direction
+        # Y: centered vertically on the crocodile
+        splash_y = self.crocodile.rect.centery
+
+        # X: at the front (end) of the crocodile based on swim direction
+        if self.crocodile.swim_direction == 1:  # Swimming right
+            splash_x = self.crocodile.rect.right  # End of sprite (front when going right)
+        else:  # Swimming left (swim_direction == 0)
+            splash_x = self.crocodile.rect.left  # Start of sprite (front when going left)
+
+        self.crocodile.pending_splashes.append((event_type, splash_x, splash_y))
+        print(f"[CONTROL] Added {event_type} splash at ({splash_x}, {splash_y}), direction: {self.crocodile.swim_direction}")
 
 
 class DebugControl(CrocodileControl):

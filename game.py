@@ -128,7 +128,15 @@ class Game:
         
         # Update all sprites
         self.all_sprites.update()
-        
+
+        # Process crocodile splash events
+        for crocodile in self.crocodiles:
+            while crocodile.pending_splashes:
+                event_type, splash_x, splash_y = crocodile.pending_splashes.pop(0)
+                splash = Splash(splash_x, splash_y)
+                self.all_sprites.add(splash)
+                print(f"[GAME] Created {event_type} splash at ({splash_x}, {splash_y})")
+
         # Check for pegador collision with crocodiles using pixel-perfect detection
         if self.pegador.state.value in ["descending", "ascending"]:
             for crocodile in self.crocodiles:
@@ -143,10 +151,6 @@ class Game:
                         self.running = False
                         print("[GAME] Game Over - No lives remaining!")
 
-                    
-                    # Play crocodile attack sound
-                    self._play_crocodile_sound()
-                    
                     break  # Only one crocodile can catch at a time
 
         # Check for pegador collision with trash using pixel-perfect collision
@@ -302,13 +306,3 @@ class Game:
         print(f"Initial state: {debug_croc.control.current_state}")
         print("States cycle: 0->1->2->3->4->0 (4=invisible)")
         print("=" * 50)
-    
-    def _play_crocodile_sound(self):
-        """Play crocodile attack sound"""
-        if SOUND_ENABLED and pygame.mixer.get_init():
-            try:
-                croc_sound = pygame.mixer.Sound(resource_path('assets/sons/crocodilo_agua.ogg'))
-                croc_sound.set_volume(CROCODILE_SOUND_VOLUME)
-                croc_sound.play()
-            except (pygame.error, FileNotFoundError) as e:
-                print(f"Warning: Could not play crocodile sound: {e}")
