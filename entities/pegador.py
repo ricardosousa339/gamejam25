@@ -226,12 +226,18 @@ class Pegador(pygame.sprite.Sprite):
         
         Args:
             trash (FloatingObject): The trash object to capture
+            
+        Returns:
+            bool: True if trash was captured (triggers splash animation)
         """
         if self.captured_trash is None and self.state == PegadorState.DESCENDING:
             self.captured_trash = trash
             trash.is_captured = True
             # Stop descending, start ascending
             self.state = PegadorState.ASCENDING
+            self.image = self.image_front  # Switch back to front view when ascending
+            return True  # Indicate that trash was captured
+        return False
     
     def get_force_percentage(self):
         """Get current force as percentage (0-100)"""
