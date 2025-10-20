@@ -25,17 +25,17 @@ GRAVITY = 0.5
 RIVER_FLOW_SPEED = -2
 
 # Spawn Manager settings
-SPAWN_WARMUP_TIME = 3000  # milliseconds - time before spawning starts
+SPAWN_WARMUP_TIME = 1500  # milliseconds - time before spawning starts
 SPAWN_INITIAL_RATE = 3000  # milliseconds - slow spawn rate at start
 SPAWN_MIN_RATE = 1000  # milliseconds - fastest spawn rate (limit)
 SPAWN_ACCELERATION_INTERVAL = 10000  # milliseconds - how often to speed up spawning
 SPAWN_ACCELERATION_AMOUNT = 200  # milliseconds - how much faster each acceleration
 
 # Trash wave settings (spawn bursts)s
-WAVE_INTERVAL_MIN = 40000  # milliseconds - minimum time between waves
-WAVE_INTERVAL_MAX = 60000  # milliseconds - maximum time between waves
-WAVE_DURATION = 3000  # milliseconds - how long a wave lasts
-WAVE_SPAWN_RATE = 600  # milliseconds - very fast spawn during wave
+WAVE_INTERVAL_MIN = 45000  # milliseconds - minimum time between waves
+WAVE_INTERVAL_MAX = 50000  # milliseconds - maximum time between waves
+WAVE_DURATION = 2500  # milliseconds - how long a wave lasts
+WAVE_SPAWN_RATE = 800  # milliseconds - very fast spawn during wave
 
 # River bounds in source image coordinates (pixels in margens.png)
 RIVER_IMAGE_BAND_TOP = 100
@@ -76,8 +76,8 @@ OBJECT_TYPES = {
 
 # Pollution Bar settings (top right corner - horizontal)
 POLLUTION_BAR_MAX_POINTS = 100  # Maximum points on the pollution bar
-POLLUTION_BAR_POINTS_LOST_PER_TRASH = 3  # Points lost when trash passes screen
-POLLUTION_BAR_POINTS_GAINED_PER_TRASH = 5  # Points gained when trash is caught
+POLLUTION_BAR_POINTS_LOST_PER_TRASH = 5  # Points lost when trash passes screen
+POLLUTION_BAR_POINTS_GAINED_PER_TRASH = 3  # Points gained when trash is caught
 POLLUTION_BAR_WIDTH = 200  # Width of the bar (horizontal)
 POLLUTION_BAR_HEIGHT = 20  # Height of the bar (horizontal)
 POLLUTION_BAR_MARGIN = 20  # Margin from screen edges
