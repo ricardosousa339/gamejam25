@@ -9,6 +9,8 @@ from entities.crocodile import Crocodile
 from entities.crocodile_control import DebugControl
 from entities.pegador import Pegador
 from entities.pegador_counter import PegadorCounter
+from entities.pollution_bar import PollutionBar
+from entities.spawn_manager import SpawnManager
 from entities.splash import Splash
 from entities.placa import Placa
 from utils import resource_path
@@ -70,28 +72,29 @@ class Game:
 
         # Create pegador counter (lives/HP system)
         self.pegador_counter = PegadorCounter(max_lives=3)
-        
+
+        # Create pollution bar (top right corner)
+        self.pollution_bar = PollutionBar()
+
+        # Create spawn manager
+        self.spawn_manager = SpawnManager()
+
         # Create placa (environmental message sign) at top center
         placa_x = SCREEN_WIDTH // 2
         placa_y = 10  # 10 pixels from top
         self.placa = Placa(placa_x, placa_y)
         self.all_sprites.add(self.placa)
 
-        # Spawn timer
-        self.last_spawn = pygame.time.get_ticks()
-        
+        # Load custom font for UI
+        self.ui_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 24)
+        self.force_font = pygame.font.Font(resource_path('assets/fonts/upheaval.ttf'), 18)
+
         # Initialize game objects
         self._setup_game()
     
     def _setup_game(self):
         """Set up initial game objects"""
-        for _ in range(3):
-            y = self._random_river_y()
-            x = random.randint(0, SCREEN_WIDTH)
-            obj_type = random.choice(list(OBJECT_TYPES.keys()))
-            floating_obj = FloatingObject(x, y, self.river_band_top, self.river_band_bottom, obj_type)
-            self.floating_objects.add(floating_obj)
-            self.all_sprites.add(floating_obj)
+        # Don't spawn initial trash - let SpawnManager control spawning
 
         # Spawn initial crocodile
         self.spawn_crocodile()
@@ -175,22 +178,30 @@ class Game:
 
                         self.floating_objects.remove(trash)
                         self.score += 10  # Add points for collecting trash
+                        self.pollution_bar.catch_trash()  # Increase pollution bar
                         break  # Only capture one at a time
         
         # Remove objects that went off screen (handle both directions)
         for obj in list(self.floating_objects):
             if RIVER_FLOW_SPEED > 0 and obj.rect.right < 0:
                 obj.kill()
+                self.pollution_bar.lose_trash()  # Decrease pollution bar
             elif RIVER_FLOW_SPEED < 0 and obj.rect.left > SCREEN_WIDTH:
                 obj.kill()
-        
-        # Spawn new objects periodically
+                self.pollution_bar.lose_trash()  # Decrease pollution bar
+
+        # Check if pollution bar is full (game over)
+        if self.pollution_bar.is_game_over():
+            self.running = False
+            self.game_over = True
+            print("[GAME] Game Over - River too polluted!")
+
+        # Spawn new objects using SpawnManager
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_spawn > OBJECT_SPAWN_RATE:
-            self.last_spawn = current_time
+        if self.spawn_manager.update(current_time):
             y = self._random_river_y()
             obj_type = random.choice(list(OBJECT_TYPES.keys()))
-            
+
             # Spawn on the side opposite to the flow so objects enter the screen
             if RIVER_FLOW_SPEED > 0:
                 spawn_x = SCREEN_WIDTH + FloatingObject.WIDTH
@@ -198,7 +209,7 @@ class Game:
             else:
                 spawn_x = -FloatingObject.WIDTH
                 floating_obj = FloatingObject(spawn_x, y, self.river_band_top, self.river_band_bottom, obj_type)
-            
+
             self.floating_objects.add(floating_obj)
             self.all_sprites.add(floating_obj)
     
@@ -241,9 +252,11 @@ class Game:
         # Draw pegador counter (lives) at bottom left
         self.pegador_counter.draw(self.screen)
 
+        # Draw pollution bar at top right
+        self.pollution_bar.draw(self.screen)
+
         # Draw score at top left (original position)
-        font = pygame.font.Font(None, 36)
-        score_text = font.render(f"Score: {self.score}", True, WHITE)
+        score_text = self.ui_font.render(f"PONTOS: {self.score}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
         
         # Draw force bar when charging (bottom right corner)
@@ -272,8 +285,7 @@ class Game:
             pygame.draw.rect(self.screen, bar_color, (bar_x, bar_y, fill_width, bar_height))
 
             # Force text (centered above the bar)
-            force_font = pygame.font.Font(None, 24)
-            force_text = force_font.render("FORÇA", True, WHITE)
+            force_text = self.force_font.render("FORÇA", True, BLACK)
             text_rect = force_text.get_rect(center=(bar_x + bar_width // 2, bar_y - 15))
             self.screen.blit(force_text, text_rect)
 
