@@ -83,8 +83,8 @@ class Game:
 
         # Create placa (environmental message sign) at top center
         placa_x = SCREEN_WIDTH // 2
-        placa_y = 10  # 10 pixels from top
-        self.placa = Placa(placa_x, placa_y)
+        placa_y = 0  # Positioned higher (closer to top edge)
+        self.placa = Placa(placa_x, placa_y, debug=self.debug)
         self.all_sprites.add(self.placa)
 
         # Load custom font for UI
