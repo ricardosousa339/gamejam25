@@ -54,6 +54,10 @@ PEGADOR_STUNNED_DURATION = 1000  # Duration in milliseconds when stunned after m
 CROCODILE_CAPTURE_DURATION = 600  # milliseconds - duration of capture animation (emerge + wobble)
 CROCODILE_CAPTURE_WOBBLE_INTENSITY = 3.0  # pixels - intensity of wobble/shake during capture
 
+# Crocodile spawn settings
+SECOND_CROCODILE_SCORE_THRESHOLD = 800  # Score needed to spawn second crocodile
+SECOND_CROCODILE_MAX_POLLUTION_PERCENT = 70  # Max pollution percentage (0-100) to allow second crocodile spawn
+
 class ObjectType():
     def __init__(self, type, image, scale):
         self.type = type

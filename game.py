@@ -33,7 +33,9 @@ class Game:
 
         # Game state
         self.score = 0
-        
+        self.second_crocodile_spawned = False  # Flag to track if second crocodile was spawned
+        self.second_crocodile_unlocked = False  # Flag to track if score threshold was reached
+
         # Load and scale background images to fill the screen
         rio_original = pygame.image.load(resource_path('assets/rio.png')).convert_alpha()
         margens_original = pygame.image.load(resource_path('assets/margens.png')).convert_alpha()
@@ -179,8 +181,14 @@ class Game:
                         self.floating_objects.remove(trash)
                         self.score += 10  # Add points for collecting trash
                         self.pollution_bar.catch_trash()  # Increase pollution bar
+
+                        # Check if score threshold for second crocodile was reached
+                        if not self.second_crocodile_unlocked and self.score >= SECOND_CROCODILE_SCORE_THRESHOLD:
+                            self.second_crocodile_unlocked = True
+                            print(f"[GAME] Second crocodile unlocked at score {self.score}!")
+
                         break  # Only capture one at a time
-        
+
         # Remove objects that went off screen (handle both directions)
         for obj in list(self.floating_objects):
             if RIVER_FLOW_SPEED > 0 and obj.rect.right < 0:
@@ -195,6 +203,14 @@ class Game:
             self.running = False
             self.game_over = True
             print("[GAME] Game Over - River too polluted!")
+
+        # Check if second crocodile should spawn (unlocked + low pollution)
+        if self.second_crocodile_unlocked and not self.second_crocodile_spawned:
+            pollution_percent = self.pollution_bar.get_pollution_percentage()
+            if pollution_percent <= SECOND_CROCODILE_MAX_POLLUTION_PERCENT:
+                self.spawn_crocodile()
+                self.second_crocodile_spawned = True
+                print(f"[GAME] Second crocodile spawned! (Pollution: {pollution_percent:.1f}%)")
 
         # Spawn new objects using SpawnManager
         current_time = pygame.time.get_ticks()

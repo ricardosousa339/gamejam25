@@ -68,6 +68,15 @@ class PollutionBar:
         self.current_points = self.max_points // 2
         print(f"[POLLUTION BAR] Reset to {self.current_points}/{self.max_points}")
 
+    def get_pollution_percentage(self):
+        """
+        Get current pollution level as percentage
+
+        Returns:
+            float: Pollution percentage (0-100)
+        """
+        return (self.current_points / self.max_points) * 100
+
     def _get_bar_color(self):
         """
         Get the color of the bar based on current pollution level
