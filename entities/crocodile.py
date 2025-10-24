@@ -173,7 +173,7 @@ class Crocodile(pygame.sprite.Sprite):
             return
 
         # Delegate movement to control (moves the rect)
-        self.control.update_movement(self, self.min_y, self.max_y)
+        self.control.update_movement(self.min_y, self.max_y)
 
         # Update animation frame
         self.animation_frame += 1
@@ -212,6 +212,7 @@ class Crocodile(pygame.sprite.Sprite):
             # Stop crocodile attack sound
             self.stop_attack_sound()
 
+            released_pegador.kill()
             return released_pegador
         return None
 

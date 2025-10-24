@@ -92,7 +92,7 @@ class CrocodileControl:
         self.waiting_at_edge = False
         print("[CONTROL] Stopped carrying mode")
 
-    def update_movement(self, crocodile, min_y, max_y):
+    def update_movement(self, min_y, max_y):
         current_time = pygame.time.get_ticks()
         # print('pos: ', crocodile.rect.x, crocodile.rect.y)
         """
@@ -106,18 +106,18 @@ class CrocodileControl:
         # Handle repositioning when emerging from fully submerged state
         if self.should_reposition:
             # Random horizontal position
-            crocodile.rect.x = random.randint(0, config.SCREEN_WIDTH - crocodile.rect.width)
+            self.crocodile.rect.x = random.randint(0, config.SCREEN_WIDTH - self.crocodile.rect.width)
 
             # Random vertical position within bounds
-            crocodile.rect.y = random.randint(min_y, max_y - crocodile.rect.height)
+            self.crocodile.rect.y = random.randint(min_y, max_y -self. crocodile.rect.height)
 
             # Random swim direction
-            crocodile.swim_direction = random.randint(0, 1)
+            self.crocodile.swim_direction = random.randint(0, 1)
 
             # Random vertical velocity
             self.vel_y = random.uniform(-1.5, 1.5)
 
-            print(f"[CROC] Repositioned to ({crocodile.rect.x}, {crocodile.rect.y}), direction: {crocodile.swim_direction}")
+            print(f"[CROC] Repositioned to ({self.crocodile.rect.x}, {self.crocodile.rect.y}), direction: {self.crocodile.swim_direction}")
 
             # Add splash at the NEW position where crocodile is emerging
             self._add_splash('emerge')
@@ -136,8 +136,8 @@ class CrocodileControl:
                 wobble_y = math.cos(elapsed_time * wobble_frequency * 1.3) * config.CROCODILE_CAPTURE_WOBBLE_INTENSITY
 
                 # Keep crocodile near surface with wobble
-                crocodile.rect.x += wobble_x
-                crocodile.rect.y = self.capture_base_y + wobble_y
+                self.crocodile.rect.x += wobble_x
+                self.crocodile.rect.y = self.capture_base_y + wobble_y
 
                 return  # Skip normal movement
             else:
@@ -159,46 +159,36 @@ class CrocodileControl:
                 # Waiting at edge for 1 second before returning
                 if current_time - self.wait_start_time > self.wait_duration:
                     # Return pegador and crocodile to normal
-                    pegador = crocodile.release_pegador()
-                    if pegador:
-                        pegador.state = PegadorState.IDLE
-                        pegador.catching_crocodile = None
-                        pegador.image = pegador.image_front
-                        pegador.mask = pygame.mask.from_surface(pegador.image)
-                        # Reset pegador to margin at horizontal center
-                        pegador.rect.centerx = config.SCREEN_WIDTH // 2
-                        pegador.rect.top = pegador.margin_y
-                        pegador.collision_rect.centerx = pegador.rect.centerx
-                        pegador.collision_rect.top = pegador.rect.top
+                    self.crocodile.release_pegador()
                     self.stop_carrying()
                 return  # Don't move while waiting
 
             # Continue swimming in current direction until off screen
-            if crocodile.swim_direction == 1:  # Swimming right
-                crocodile.rect.x += 2
+            if self.crocodile.swim_direction == 1:  # Swimming right
+                self.crocodile.rect.x += 2
                 # Check if completely off screen (right edge)
-                if crocodile.rect.left > config.SCREEN_WIDTH:
+                if self.crocodile.rect.left > config.SCREEN_WIDTH:
                     self.waiting_at_edge = True
                     self.wait_start_time = current_time
                     print("[CONTROL] Reached right edge, waiting...")
             else:  # Swimming left
-                crocodile.rect.x -= 2
+                self.crocodile.rect.x -= 2
                 # Check if completely off screen (left edge)
-                if crocodile.rect.right < 0:
+                if self.crocodile.rect.right < 0:
                     self.waiting_at_edge = True
                     self.wait_start_time = current_time
                     print("[CONTROL] Reached left edge, waiting...")
             return  # Skip normal movement behavior
 
         # Normal random swim behavior
-        if(crocodile.swim_direction):
-            crocodile.rect.x += 2
-            if(crocodile.rect.x > config.SCREEN_WIDTH + 20):
-                crocodile.swim_direction = 0
+        if(self.crocodile.swim_direction):
+            self.crocodile.rect.x += 2
+            if(self.crocodile.rect.x > config.SCREEN_WIDTH + 20):
+                self.crocodile.swim_direction = 0
         else:
-            crocodile.rect.x -= 2
-            if(crocodile.rect.x < -100):
-                crocodile.swim_direction = 1
+            self.crocodile.rect.x -= 2
+            if(self.crocodile.rect.x < -100):
+                self.crocodile.swim_direction = 1
 
         # Check if it's time to change vertical direction
         if current_time - self.swim_vert_timer > self.next_swim_vert_change:
@@ -218,14 +208,14 @@ class CrocodileControl:
 
         # Apply vertical movement with small wobble
         wobble = random.uniform(-0.2, 0.2)
-        crocodile.rect.y += self.vel_y + wobble
+        self.crocodile.rect.y += self.vel_y + wobble
 
         # Keep within vertical bounds with bounce
-        if crocodile.rect.top < min_y:
-            crocodile.rect.top = min_y
+        if self.crocodile.rect.top < min_y:
+            self.crocodile.rect.top = min_y
             self.vel_y = abs(self.vel_y)  # Force downward movement
-        elif crocodile.rect.bottom > max_y:
-            crocodile.rect.bottom = max_y
+        elif self.crocodile.rect.bottom > max_y:
+            self.crocodile.rect.bottom = max_y
             self.vel_y = -abs(self.vel_y)  # Force upward movement
 
     def update_state(self):
@@ -345,7 +335,7 @@ class DebugControl(CrocodileControl):
         self.transitioning_up = True
         print(f"[DEBUG CONTROL] Created with fixed position ({self.fixed_x}, {self.fixed_y})")
 
-    def update_movement(self, crocodile, min_y, max_y):
+    def update_movement(self, min_y, max_y):
         """
         Keep crocodile at fixed position
 
@@ -355,10 +345,10 @@ class DebugControl(CrocodileControl):
             max_y: Maximum y boundary (ignored)
         """
         # Keep position fixed
-        crocodile.rect.x = self.fixed_x
-        crocodile.rect.y = self.fixed_y
+        self.crocodile.rect.x = self.fixed_x
+        self.crocodile.rect.y = self.fixed_y
         # Set velocity to zero
-        crocodile.vel_y = 0
+        self.crocodile.vel_y = 0
 
     def update_state(self):
         """

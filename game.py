@@ -72,6 +72,10 @@ class Game:
         self.pegador = Pegador(pegador_x, pegador_y, self.river_band_top, self.river_band_bottom)
         self.all_sprites.add(self.pegador)
 
+        # Pegador respawn cooldown tracking
+        self.pegador_respawn_cooldown = 0  # Timer for respawn cooldown
+        self.pegador_is_on_cooldown = False  # Flag to track if waiting for respawn
+
         # Create pegador counter (lives/HP system)
         self.pegador_counter = PegadorCounter(max_lives=3)
 
@@ -126,7 +130,7 @@ class Game:
         """Update game state"""
         # Update river animation
         self.rio_x_offset += RIVER_FLOW_SPEED
-        
+
         # Handle wrapping for both positive and negative speeds
         if RIVER_FLOW_SPEED > 0:
             # Moving right: reset when offset reaches width
@@ -136,9 +140,16 @@ class Game:
             # Moving left: reset when offset goes negative
             if self.rio_x_offset <= -self.rio_width:
                 self.rio_x_offset = 0
-        
+
         # Update all sprites
         self.all_sprites.update()
+
+        # Update pegador respawn cooldown
+        if self.pegador_is_on_cooldown:
+            self.pegador_respawn_cooldown -= 16  # Approximate ms per frame (60 FPS)
+            if self.pegador_respawn_cooldown <= 0:
+                # Cooldown expired, spawn new pegador
+                self.spawn_pegador()
 
         # Process crocodile splash events
         for crocodile in self.crocodiles:
@@ -149,12 +160,17 @@ class Game:
                 print(f"[GAME] Created {event_type} splash at ({splash_x}, {splash_y})")
 
         # Check for pegador collision with crocodiles using pixel-perfect detection
-        if self.pegador.state.value in ["descending", "ascending"]:
+        if not self.pegador_is_on_cooldown and self.pegador.state.value in ["descending", "ascending"]:
             for crocodile in self.crocodiles:
                 if crocodile.check_collision(self.pegador):
                     # Pegador gets caught by the crocodile
                     self.pegador.get_caught_by_crocodile(crocodile)
                     crocodile.start_carrying_pegador(self.pegador)
+
+                    # Start cooldown for new pegador spawn
+                    self.pegador_respawn_cooldown = PEGADOR_RESPAWN_COOLDOWN
+                    self.pegador_is_on_cooldown = True
+                    print(f"[GAME] Pegador caught! Cooldown started for {PEGADOR_RESPAWN_COOLDOWN}ms")
 
                     # Lose a life
                     if not self.pegador_counter.lose_life():
@@ -166,7 +182,7 @@ class Game:
                     break  # Only one crocodile can catch at a time
 
         # Check for pegador collision with trash using pixel-perfect collision
-        if self.pegador.captured_trash is None and self.pegador.state.value == "descending":
+        if not self.pegador_is_on_cooldown and self.pegador.captured_trash is None and self.pegador.state.value == "descending":
             for trash in self.floating_objects:
                 # First check bounding box collision for performance
                 if self.pegador.collision_rect.colliderect(trash.rect):
@@ -197,6 +213,25 @@ class Game:
             elif RIVER_FLOW_SPEED < 0 and obj.rect.left > SCREEN_WIDTH:
                 obj.kill()
                 self.pollution_bar.lose_trash()  # Decrease pollution bar
+
+        # Clean up carried pegadores when crocodile leaves screen or submerges
+        for crocodile in list(self.crocodiles):
+            # Check if crocodile is off-screen
+            is_off_screen = False
+            if RIVER_FLOW_SPEED > 0 and crocodile.rect.right < 0:
+                is_off_screen = True
+            elif RIVER_FLOW_SPEED < 0 and crocodile.rect.left > SCREEN_WIDTH:
+                is_off_screen = True
+
+            # Check if crocodile is fully submerged
+            is_fully_submerged = crocodile.control.current_state == 4  # FULLY_SUBMERGED
+
+            # If crocodile leaves screen or submerges, kill the carried pegador
+            if (is_off_screen or is_fully_submerged) and crocodile.is_carrying_pegador:
+                carried_pegador = crocodile.release_pegador()
+                if carried_pegador:
+                    carried_pegador.kill()
+                    print(f"[GAME] Carried pegador removed (crocodile off-screen: {is_off_screen}, submerged: {is_fully_submerged})")
 
         # Check if pollution bar is full (game over)
         if self.pollution_bar.is_game_over():
@@ -274,7 +309,7 @@ class Game:
         # Draw score at top left (original position)
         score_text = self.ui_font.render(f"PONTOS: {self.score}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
-        
+
         # Draw force bar when charging (bottom right corner)
         if self.pegador.is_charging():
             bar_width = 200
@@ -310,6 +345,16 @@ class Game:
         spawn_min_y = self.river_band_top
         spawn_max_y = max(spawn_min_y, self.river_band_bottom - FloatingObject.HEIGHT)
         return random.randint(spawn_min_y, spawn_max_y)
+
+    def spawn_pegador(self):
+        """Spawn a new pegador at the margin"""
+        pegador_x = SCREEN_WIDTH // 2
+        pegador_y = PEGADOR_MARGIN_Y
+        new_pegador = Pegador(pegador_x, pegador_y, self.river_band_top, self.river_band_bottom)
+        self.all_sprites.add(new_pegador)
+        self.pegador = new_pegador
+        self.pegador_is_on_cooldown = False
+        print(f"[GAME] New pegador spawned at ({pegador_x}, {pegador_y})")
 
     def spawn_crocodile(self):
         """Spawn a crocodile in the river"""
